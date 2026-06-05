@@ -1,23 +1,24 @@
 """
 Image Generator — Uses Hugging Face Inference API (FREE)
-Model: stable-diffusion-xl-base-1.0 or similar free models
 """
 
 import requests
 import base64
 import time
-import io
 
-# Best free models on Hugging Face for realistic AI girls
+HF_BASE = "https://router.huggingface.co/hf-inference/models"
+
+# Models with their supported payload styles
+# "flux" = no negative_prompt, simple inputs only
+# "sd"   = supports negative_prompt + parameters
 HF_MODELS = [
-    "stabilityai/stable-diffusion-xl-base-1.0",
-    "runwayml/stable-diffusion-v1-5",
-    "Lykon/dreamshaper-8",          # Great for realistic portraits
-    "SG161222/Realistic_Vision_V6.0_B1_noVAE",
+    ("black-forest-labs/FLUX.1-schnell", "flux"),
+    ("black-forest-labs/FLUX.1-dev",     "flux"),
+    ("stabilityai/stable-diffusion-2-1", "sd"),
+    ("Lykon/dreamshaper-xl-lightning",   "sd"),
 ]
 
 def build_prompt(theme: dict) -> str:
-    """Build a detailed prompt for a consistent AI girl character."""
     base_character = (
         "beautiful young woman, dark hair, hazel eyes, perfect skin, "
         "natural makeup, photorealistic, hyperdetailed face, "
@@ -39,48 +40,48 @@ def build_negative_prompt() -> str:
     )
 
 def generate_with_huggingface(prompt: str, negative_prompt: str, api_key: str) -> bytes | None:
-    """Call Hugging Face Inference API — free tier."""
     headers = {"Authorization": f"Bearer {api_key}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "negative_prompt": negative_prompt,
-            "num_inference_steps": 30,
-            "guidance_scale": 7.5,
-            "width": 1024,
-            "height": 1024,
-        }
-    }
 
-    for model in HF_MODELS:
-        url = f"https://router.huggingface.co/hf-inference/models/{model}"
+    for model, style in HF_MODELS:
+        url = f"{HF_BASE}/{model}"
         print(f"  Trying model: {model}")
+
+        if style == "flux":
+            payload = {"inputs": prompt}
+        else:
+            payload = {
+                "inputs": prompt,
+                "parameters": {
+                    "negative_prompt": negative_prompt,
+                    "num_inference_steps": 25,
+                    "guidance_scale": 7.5,
+                    "width": 1024,
+                    "height": 1024,
+                }
+            }
+
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=120)
-            if response.status_code == 200 and response.headers.get("content-type", "").startswith("image"):
-                print(f"  ✅ Success with {model}")
+            content_type = response.headers.get("content-type", "")
+
+            if response.status_code == 200 and content_type.startswith("image"):
+                print(f"  Success with {model}")
                 return response.content
             elif response.status_code == 503:
-                # Model loading, wait and retry once
-                print(f"  ⏳ Model loading, waiting 20s...")
+                print(f"  Model loading, waiting 20s...")
                 time.sleep(20)
                 response = requests.post(url, headers=headers, json=payload, timeout=120)
                 if response.status_code == 200:
                     return response.content
             else:
-                print(f"  ⚠️ {model} returned {response.status_code}")
+                print(f"  {model} returned {response.status_code}: {response.text[:200]}")
         except Exception as e:
-            print(f"  ❌ Error with {model}: {e}")
+            print(f"  Error with {model}: {e}")
             continue
 
     return None
 
 def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
-    """
-    Upload image to ImgBB (free image hosting).
-    Instagram needs a public URL — ImgBB provides one for free.
-    Get free API key at: https://api.imgbb.com/
-    """
     try:
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
         response = requests.post(
@@ -89,8 +90,7 @@ def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
             timeout=30
         )
         if response.status_code == 200:
-            data = response.json()
-            return data["data"]["url"]
+            return response.json()["data"]["url"]
         else:
             print(f"ImgBB upload failed: {response.status_code} — {response.text}")
             return None
@@ -99,16 +99,11 @@ def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
         return None
 
 def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str) -> str | None:
-    """Full pipeline: generate → upload → return public URL."""
     prompt = build_prompt(theme)
     negative_prompt = build_negative_prompt()
-
     print(f"  Prompt: {prompt[:100]}...")
-
     image_bytes = generate_with_huggingface(prompt, negative_prompt, hf_api_key)
     if not image_bytes:
         return None
-
     print("  Uploading to ImgBB...")
-    public_url = upload_to_imgbb(image_bytes, imgbb_api_key)
-    return public_url
+    return upload_to_imgbb(image_bytes, imgbb_api_key)

@@ -1,0 +1,52 @@
+name: AI Instagram Bot 🤖
+
+on:
+  schedule:
+    # Posts 3x per day (UTC times — adjust for your timezone)
+    # IST = UTC + 5:30
+    # 8:00 AM IST  = 2:30 AM UTC
+    # 1:00 PM IST  = 7:30 AM UTC
+    # 7:00 PM IST  = 1:30 PM UTC
+    - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: '30 7 * * *'   # 1:00 PM IST
+    - cron: '30 13 * * *'  # 7:00 PM IST
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual trigger reason'
+        required: false
+        default: 'Manual post'
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Instagram Bot
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_ACCOUNT_ID:   ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
+          HF_API_KEY:             ${{ secrets.HF_API_KEY }}
+          IMGBB_API_KEY:          ${{ secrets.IMGBB_API_KEY }}
+        run: |
+          cd src
+          python bot.py
+
+      - name: Log result
+        if: always()
+        run: echo "Bot run completed at $(date)"

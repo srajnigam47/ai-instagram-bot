@@ -53,7 +53,7 @@ def generate_with_huggingface(prompt: str, negative_prompt: str, api_key: str) -
     }
 
     for model in HF_MODELS:
-        url = f"https://api-inference.huggingface.co/models/{model}"
+        url = f"https://router.huggingface.co/hf-inference/models/{model}"
         print(f"  Trying model: {model}")
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=120)

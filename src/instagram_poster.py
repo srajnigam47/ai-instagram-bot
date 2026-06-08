@@ -14,17 +14,17 @@ import time
 
 GRAPH_API_BASE = "https://graph.facebook.com/v21.0"
 
-def verify_token(access_token: str) -> bool:
-    """Quick check that the token is valid before attempting to post."""
+def verify_token(access_token: str, account_id: str) -> bool:
+    """Check token is valid using the Instagram user endpoint."""
     try:
         response = requests.get(
-            f"{GRAPH_API_BASE}/me",
-            params={"access_token": access_token.strip(), "fields": "id,username"},
+            f"{GRAPH_API_BASE}/{account_id}",
+            params={"access_token": access_token.strip(), "fields": "id,username,name"},
             timeout=15
         )
         data = response.json()
         if "id" in data:
-            print(f"  Token valid — account: {data.get('username', data['id'])}")
+            print(f"  Token valid — account: {data.get('username', data.get('name', data['id']))}")
             return True
         else:
             print(f"  Token check failed: {data}")
@@ -39,6 +39,7 @@ def create_media_container(image_url: str, caption: str, access_token: str, acco
     params = {
         "image_url": image_url,
         "caption": caption,
+        "media_type": "IMAGE",
         "access_token": access_token.strip(),
     }
 
@@ -107,7 +108,7 @@ def post_to_instagram(image_url: str, caption: str, access_token: str, account_i
     """Full posting pipeline: container → wait → publish."""
 
     print("  Verifying token...")
-    if not verify_token(access_token):
+    if not verify_token(access_token, account_id):
         print("  ❌ Token invalid — check INSTAGRAM_ACCESS_TOKEN secret.")
         return None
 

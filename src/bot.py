@@ -19,7 +19,7 @@ INSTAGRAM_ACCOUNT_ID   = os.environ["INSTAGRAM_ACCOUNT_ID"]
 GROQ_API_KEY           = os.environ["GROQ_API_KEY"]
 HF_API_KEY             = os.environ["HF_API_KEY"]
 IMGBB_API_KEY          = os.environ["IMGBB_API_KEY"]
-FAL_API_KEY            = os.environ["FAL_API_KEY"]
+FAL_API_KEY            = os.environ.get("FAL_API_KEY", "")  # optional
 
 THEMES = [
     {"style": "fashion editorial",  "setting": "luxury penthouse rooftop at golden hour", "vibe": "confident, glamorous"},
@@ -56,13 +56,13 @@ def run_bot():
 
     # Step 3: Generate video from image
     print("Generating video...")
-    video_bytes = generate_video(image_url, theme, FAL_API_KEY)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        video_bytes = generate_video(image_url, theme, HF_API_KEY, tmp_dir)
 
-    if video_bytes:
-        print(f"Video generated ({len(video_bytes)//1024}KB)")
+        if video_bytes:
+            print(f"Video generated ({len(video_bytes)//1024}KB)")
 
-        # Step 4: Mix music into video
-        with tempfile.TemporaryDirectory() as tmp_dir:
+            # Step 4: Mix music into video
             print("Mixing music...")
             final_video = mix_audio(video_bytes, tmp_dir)
             print(f"Final video size: {len(final_video)//1024}KB")
@@ -86,16 +86,16 @@ def run_bot():
             import time
             time.sleep(30)  # Give Instagram time to download the video
             delete_release(release_id)
+            else:
+                print("Video upload failed — falling back to image post.")
+                result = post_to_instagram(image_url, caption, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID)
+                if result:
+                    print(f"Image posted as fallback. Post ID: {result}")
         else:
-            print("Video upload failed — falling back to image post.")
+            print("Video generation failed — falling back to image post.")
             result = post_to_instagram(image_url, caption, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID)
             if result:
                 print(f"Image posted as fallback. Post ID: {result}")
-    else:
-        print("Video generation failed — falling back to image post.")
-        result = post_to_instagram(image_url, caption, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID)
-        if result:
-            print(f"Image posted as fallback. Post ID: {result}")
 
 if __name__ == "__main__":
     run_bot()

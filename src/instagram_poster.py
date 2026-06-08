@@ -6,7 +6,7 @@ Uses Authorization: Bearer header for Instagram Login tokens.
 import requests
 import time
 
-GRAPH_API_BASE = "https://graph.facebook.com/v21.0"
+GRAPH_API_BASE = "https://graph.instagram.com/v21.0"
 
 def _headers(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token.strip()}"}

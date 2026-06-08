@@ -16,10 +16,12 @@ GRAPH_API_BASE = "https://graph.facebook.com/v21.0"
 
 def verify_token(access_token: str, account_id: str) -> bool:
     """Check token is valid using the Instagram user endpoint."""
+    token = access_token.strip()
+    print(f"  Token length: {len(token)}, starts with: {token[:8]}, ends with: {token[-8:]}")
     try:
         response = requests.get(
             f"{GRAPH_API_BASE}/{account_id}",
-            params={"access_token": access_token.strip(), "fields": "id,username,name"},
+            params={"access_token": token, "fields": "id,username,name"},
             timeout=15
         )
         data = response.json()

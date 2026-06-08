@@ -95,6 +95,36 @@ def publish_container(container_id: str, access_token: str, account_id: str) -> 
         print(f"  ❌ Publish error: {e}")
         return None
 
+def post_reel_to_instagram(video_url: str, caption: str, access_token: str, account_id: str) -> str | None:
+    """Post a video as an Instagram Reel."""
+    url = f"{GRAPH_API_BASE}/{account_id}/media"
+    try:
+        response = requests.post(
+            url,
+            headers=_headers(access_token),
+            json={
+                "video_url": video_url,
+                "caption": caption,
+                "media_type": "REELS",
+                "share_to_feed": "true",
+            },
+            timeout=30
+        )
+        data = response.json()
+        if "id" in data:
+            container_id = data["id"]
+            print(f"  Reel container created: {container_id}")
+            print("  Waiting for Instagram to process video (up to 2 min)...")
+            ready = wait_for_container(container_id, access_token, max_wait=120)
+            if not ready:
+                print("  Timed out, attempting publish anyway...")
+            return publish_container(container_id, access_token, account_id)
+        print(f"  ❌ Reel container failed: {data}")
+        return None
+    except Exception as e:
+        print(f"  ❌ Reel error: {e}")
+        return None
+
 def post_to_instagram(image_url: str, caption: str, access_token: str, account_id: str) -> str | None:
     print("  Verifying token...")
     if not verify_token(access_token, account_id):

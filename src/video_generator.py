@@ -1,191 +1,118 @@
 """
-Video Generator — 100% Free
-Generates 3 FLUX images of the AI girl, then uses ffmpeg to create
-a smooth video with Ken Burns zoom + transitions between shots.
-No external video API needed.
+Video Generator — FREE
+3 FLUX portrait shots → ffmpeg Ken Burns zoom + crossfade → 9:16 MP4
 """
 
 import os
 import subprocess
 import requests
-import tempfile
-import time
+from image_generator import generate_hf_image, build_shot_prompt
 
-HF_BASE = "https://router.huggingface.co/hf-inference/models"
 
-HF_MODELS = [
-    ("black-forest-labs/FLUX.1-schnell", "flux"),
-    ("black-forest-labs/FLUX.1-dev",     "flux"),
-    ("stabilityai/stable-diffusion-2-1", "sd"),
-]
-
-def build_shot_prompt(theme: dict, shot: int) -> str:
-    base = (
-        "beautiful young woman, dark hair, hazel eyes, perfect skin, "
-        "natural makeup, photorealistic, hyperdetailed face, "
-    )
-    shots = [
-        f"{base}{theme['style']}, {theme['setting']}, {theme['vibe']} expression, "
-        "full body shot, professional photography, 8k, cinematic, Instagram model",
-
-        f"{base}{theme['style']}, {theme['setting']}, confident smile, "
-        "close up face and shoulders, bokeh background, magazine quality, cinematic",
-
-        f"{base}{theme['style']}, {theme['setting']}, {theme['vibe']}, "
-        "mid shot, dramatic lighting, sharp focus, luxury aesthetic",
-    ]
-    return shots[shot % len(shots)]
-
-def download_image(url: str, path: str) -> bool:
-    try:
-        r = requests.get(url, timeout=30)
-        if r.status_code == 200:
-            with open(path, "wb") as f:
-                f.write(r.content)
-            return True
-    except Exception as e:
-        print(f"  Image download error: {e}")
-    return False
-
-def generate_hf_image(prompt: str, api_key: str) -> bytes | None:
-    headers = {"Authorization": f"Bearer {api_key}"}
-    for model, style in HF_MODELS:
-        url = f"{HF_BASE}/{model}"
-        payload = {"inputs": prompt} if style == "flux" else {
-            "inputs": prompt,
-            "parameters": {"num_inference_steps": 25, "guidance_scale": 7.5,
-                           "width": 768, "height": 1344}
-        }
-        try:
-            r = requests.post(url, headers=headers, json=payload, timeout=120)
-            if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
-                return r.content
-            elif r.status_code == 503:
-                time.sleep(20)
-                r = requests.post(url, headers=headers, json=payload, timeout=120)
-                if r.status_code == 200:
-                    return r.content
-            else:
-                print(f"  HF {model}: {r.status_code}")
-        except Exception as e:
-            print(f"  HF error: {e}")
-    return None
-
-def images_to_video(image_paths: list[str], tmp_dir: str, duration_each: int = 3) -> bytes | None:
-    """
-    Use ffmpeg to create a smooth vertical video from multiple images.
-    Each image gets a Ken Burns zoom effect + crossfade transition.
-    """
+def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> bytes | None:
     if not image_paths:
         return None
 
     output_path = os.path.join(tmp_dir, "slideshow.mp4")
     n = len(image_paths)
+    fps = 25
 
-    # Build ffmpeg filter for ken burns + crossfade transitions
-    filter_parts = []
     inputs = []
-    for i, img_path in enumerate(image_paths):
-        inputs += ["-loop", "1", "-t", str(duration_each + 1), "-i", img_path]
-        zoom_dir = "in" if i % 2 == 0 else "out"
-        if zoom_dir == "in":
-            zoom_expr = "min(zoom+0.0008,1.4)"
-            x_expr = "iw/2-(iw/zoom/2)"
-            y_expr = "ih/2-(ih/zoom/2)"
-        else:
-            zoom_expr = "max(zoom-0.0008,1.0)"
-            x_expr = "iw/2-(iw/zoom/2)"
-            y_expr = "ih/2-(ih/zoom/2)"
+    filter_parts = []
 
-        fps = 25
+    for i, img in enumerate(image_paths):
+        inputs += ["-loop", "1", "-t", str(duration_each + 1), "-i", img]
         d = duration_each * fps
+        # Alternate zoom direction for cinematic variety
+        if i % 2 == 0:
+            z = "min(zoom+0.0006,1.3)"
+        else:
+            z = "max(zoom-0.0006,1.0)"
         filter_parts.append(
             f"[{i}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
             f"crop=1080:1920,"
-            f"zoompan=z='{zoom_expr}':x='{x_expr}':y='{y_expr}':d={d}:s=1080x1920:fps={fps},"
+            f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps={fps},"
             f"setpts=PTS-STARTPTS,fps={fps}[v{i}]"
         )
 
-    # Crossfade between clips
     if n == 1:
-        concat_filter = "[v0]"
+        final_filter = ";".join(filter_parts) + ";[v0]copy[vout]"
     else:
-        xfade_parts = []
-        prev = "[v0]"
+        xfades = []
+        prev   = "[v0]"
         offset = duration_each - 1
         for i in range(1, n):
             out = f"[xf{i}]" if i < n - 1 else "[vout]"
-            xfade_parts.append(f"{prev}[v{i}]xfade=transition=fade:duration=1:offset={offset}{out}")
-            prev = f"[xf{i}]"
+            xfades.append(
+                f"{prev}[v{i}]xfade=transition=fade:duration=1:offset={offset}{out}"
+            )
+            prev    = f"[xf{i}]"
             offset += duration_each - 1
-        concat_filter = ";".join(xfade_parts)
+        final_filter = ";".join(filter_parts) + ";" + ";".join(xfades)
 
-    if n == 1:
-        final_filter = ";".join(filter_parts) + f";[v0]copy[vout]"
-    else:
-        final_filter = ";".join(filter_parts) + ";" + concat_filter
+    cmd = (
+        ["ffmpeg", "-y"]
+        + inputs
+        + [
+            "-filter_complex", final_filter,
+            "-map", "[vout]",
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "22",
+            "-pix_fmt", "yuv420p",
+            "-r", str(fps),
+            "-movflags", "+faststart",
+            output_path,
+        ]
+    )
 
-    cmd = [
-        "ffmpeg", "-y",
-    ] + inputs + [
-        "-filter_complex", final_filter,
-        "-map", "[vout]",
-        "-c:v", "libx264",
-        "-pix_fmt", "yuv420p",
-        "-r", "25",
-        "-movflags", "+faststart",
-        output_path
-    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+    except subprocess.TimeoutExpired:
+        print("  ffmpeg timed out")
+        return None
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"  ffmpeg error: {result.stderr[-500:]}")
+        print(f"  ffmpeg error:\n{result.stderr[-1000:]}")
         return None
 
     with open(output_path, "rb") as f:
         return f.read()
 
-def generate_video(image_url: str, theme: dict, hf_api_key: str, tmp_dir: str = None) -> bytes | None:
-    """
-    Generate 3 AI girl images and stitch into a smooth Reel video.
-    image_url: the first image already generated (reuse it)
-    """
-    manage_tmp = tmp_dir is None
-    if manage_tmp:
-        import tempfile
-        tmp_obj = tempfile.TemporaryDirectory()
-        tmp_dir = tmp_obj.name
 
+def generate_video(
+    image_url: str, theme: dict, hf_api_key: str, tmp_dir: str, seed: int = 0
+) -> bytes | None:
     image_paths = []
 
-    # Reuse the already-generated first image
-    img0_path = os.path.join(tmp_dir, "shot0.jpg")
-    if download_image(image_url, img0_path):
-        image_paths.append(img0_path)
-        print(f"  Shot 1 ready (reused from image post)")
+    # Reuse the already-generated shot 0 (no extra API call)
+    shot0 = os.path.join(tmp_dir, "shot0.jpg")
+    try:
+        r = requests.get(image_url, timeout=30)
+        if r.status_code == 200:
+            with open(shot0, "wb") as f:
+                f.write(r.content)
+            image_paths.append(shot0)
+            print("  Shot 1 ready (reused)")
+    except Exception as e:
+        print(f"  Shot 0 download failed: {e}")
 
-    # Generate 2 more shots
+    # Generate 2 more portrait shots with different angles
     for shot in range(1, 3):
         print(f"  Generating shot {shot + 1}...")
-        prompt = build_shot_prompt(theme, shot)
+        prompt    = build_shot_prompt(theme, shot, seed)
         img_bytes = generate_hf_image(prompt, hf_api_key)
         if img_bytes:
-            img_path = os.path.join(tmp_dir, f"shot{shot}.jpg")
-            with open(img_path, "wb") as f:
+            p = os.path.join(tmp_dir, f"shot{shot}.jpg")
+            with open(p, "wb") as f:
                 f.write(img_bytes)
-            image_paths.append(img_path)
+            image_paths.append(p)
             print(f"  Shot {shot + 1} ready")
         else:
             print(f"  Shot {shot + 1} failed, skipping")
 
     if not image_paths:
-        print("  No images generated for video")
         return None
 
-    print(f"  Creating video from {len(image_paths)} shots...")
-    video_bytes = images_to_video(image_paths, tmp_dir)
-
-    if manage_tmp:
-        tmp_obj.cleanup()
-
-    return video_bytes
+    print(f"  Stitching {len(image_paths)} shots...")
+    return images_to_video(image_paths, tmp_dir)

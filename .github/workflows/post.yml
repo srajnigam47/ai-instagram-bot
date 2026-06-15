@@ -1,4 +1,4 @@
-name: AI Instagram Bot 🤖
+name: AI Instagram Bot
 
 on:
   schedule:
@@ -14,12 +14,12 @@ on:
         default: 'Manual post'
 
 permissions:
-  contents: write  # needed to create/delete GitHub Releases for video hosting
+  contents: write   # needed to create/delete GitHub Releases for video hosting
 
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout code
@@ -30,15 +30,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install ffmpeg
+      - name: Install ffmpeg (static binary)
         run: |
           wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
           tar xf ffmpeg-release-amd64-static.tar.xz
           sudo cp ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ffmpeg
+          sudo chmod +x /usr/local/bin/ffmpeg
           ffmpeg -version | head -1
 
-      - name: Install dependencies
-        run: pip install requests fal-client
+      - name: Install Python dependencies
+        run: pip install requests
 
       - name: Run Instagram Bot
         env:
@@ -47,13 +48,12 @@ jobs:
           GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
           HF_API_KEY:             ${{ secrets.HF_API_KEY }}
           IMGBB_API_KEY:          ${{ secrets.IMGBB_API_KEY }}
-          FAL_API_KEY:            ${{ secrets.FAL_API_KEY }}
           GITHUB_TOKEN:           ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY:      ${{ github.repository }}
         run: |
           cd src
           python bot.py
 
-      - name: Log result
+      - name: Done
         if: always()
-        run: echo "Bot run completed at $(date)"
+        run: echo "Completed at $(date)"

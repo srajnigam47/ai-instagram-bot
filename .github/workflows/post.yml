@@ -30,12 +30,17 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install ffmpeg (static binary)
+      - name: Install ffmpeg
         run: |
-          wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-          tar xf ffmpeg-release-amd64-static.tar.xz
-          sudo cp ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ffmpeg
-          sudo chmod +x /usr/local/bin/ffmpeg
+          # Try apt first (fast on Ubuntu 24.04); fall back to BtbN static build
+          if sudo apt-get install -y --no-install-recommends ffmpeg 2>/dev/null; then
+            echo "Installed via apt"
+          else
+            echo "apt failed — downloading BtbN static build from GitHub CDN"
+            wget -q "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-linux64-gpl.tar.xz" -O ffmpeg.tar.xz
+            tar xf ffmpeg.tar.xz
+            sudo install -m755 ffmpeg-*/bin/ffmpeg /usr/local/bin/ffmpeg
+          fi
           ffmpeg -version | head -1
 
       - name: Install Python dependencies

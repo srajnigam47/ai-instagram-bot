@@ -35,15 +35,17 @@ CAMERA_STYLES = [
 ]
 
 OUTFITS = {
-    "fashion editorial":  ["fitted blazer open over a simple top, tailored trousers", "off-shoulder silk blouse, high-waist jeans", "slip dress with delicate gold jewelry"],
-    "fitness aesthetic":  ["fitted sports bra and high-waist leggings", "oversized athletic hoodie, biker shorts", "crop top and track pants"],
-    "beach lifestyle":    ["bikini top with linen shorts and an open shirt", "one-piece swimsuit", "flowing sundress, barefoot"],
-    "street fashion":     ["leather jacket, crop top, cargo pants", "oversized hoodie, bike shorts, chunky sneakers", "vintage tee, mini skirt, ankle boots"],
-    "cozy aesthetic":     ["oversized knit sweater, straight-leg jeans", "cozy turtleneck, wide-leg pants", "soft cardigan over a simple dress"],
-    "glamour shot":       ["sequin slip dress", "form-fitting bodycon dress, minimal jewelry", "sleek satin gown"],
-    "travel influencer":  ["linen co-ord set", "floral midi dress, straw hat", "cropped blazer, wide-leg trousers"],
-    "party ready":        ["backless mini dress", "silky two-piece set", "embellished corset top, tailored pants"],
+    "beach lifestyle":      ["colorful triangle bikini with a sheer sarong wrap", "one-piece swimsuit with a light cover-up", "halter bikini top and high-waist bikini bottoms"],
+    "poolside glam":        ["metallic one-piece swimsuit", "high-cut bikini with gold jewelry", "cut-out one-piece swimsuit"],
+    "bikini beach day":     ["bright bikini with a straw hat", "ribbed bikini set", "classic red bikini"],
+    "tropical golden hour": ["flowy beach dress over a bikini", "crochet bikini set", "linen beach cover-up"],
+    "fitness aesthetic":    ["fitted sports bra and high-waist leggings", "athletic two-piece set", "crop top and bike shorts"],
+    "resort vacation":      ["silky beach kaftan", "linen co-ord set", "strapless sundress"],
+    "glamour swimwear":     ["sculpted one-piece swimsuit", "high-shine bikini set", "plunge one-piece with gold accents"],
+    "sunset beach party":   ["boho bikini with layered necklaces", "backless swim romper", "fringe bikini set"],
 }
+
+SAFETY_SUFFIX = "tasteful and fully covered swimwear, non-explicit, SFW, appropriate for Instagram community guidelines"
 
 def _pick(lst, seed):
     return lst[seed % len(lst)]
@@ -56,7 +58,7 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
     return (
         f"{char}. She is wearing {outfit}. "
         f"She is at {theme['setting']}, {theme['vibe']} mood, relaxed natural pose. "
-        f"{camera}. Instagram lifestyle photo."
+        f"{camera}. Instagram lifestyle photo. {SAFETY_SUFFIX}."
     )
 
 def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
@@ -73,7 +75,7 @@ def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
 
     return (
         f"{char}, wearing {outfit}. {angle}. "
-        f"{theme['vibe'].capitalize()} expression. {camera}."
+        f"{theme['vibe'].capitalize()} expression. {camera}. {SAFETY_SUFFIX}."
     )
 
 def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int = 1344) -> bytes | None:

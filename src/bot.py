@@ -23,14 +23,14 @@ HF_API_KEY             = os.environ["HF_API_KEY"]
 IMGBB_API_KEY          = os.environ["IMGBB_API_KEY"]
 
 THEMES = [
-    {"style": "fashion editorial",  "setting": "luxury penthouse rooftop at golden hour",  "vibe": "confident, glamorous"},
-    {"style": "fitness aesthetic",  "setting": "modern gym with sunlight streaming in",    "vibe": "strong, energetic"},
-    {"style": "beach lifestyle",    "setting": "tropical beach at sunset",                 "vibe": "carefree, radiant"},
-    {"style": "street fashion",     "setting": "Tokyo neon-lit streets at night",          "vibe": "edgy, cool"},
-    {"style": "cozy aesthetic",     "setting": "minimalist café with warm lighting",       "vibe": "soft, approachable"},
-    {"style": "glamour shot",       "setting": "professional studio with dramatic light",  "vibe": "fierce, powerful"},
-    {"style": "travel influencer",  "setting": "Santorini white architecture at dawn",     "vibe": "dreamy, wanderlust"},
-    {"style": "party ready",        "setting": "upscale rooftop lounge at night",          "vibe": "fun, magnetic"},
+    {"style": "beach lifestyle",      "setting": "tropical beach at sunset, turquoise water",   "vibe": "carefree, radiant"},
+    {"style": "poolside glam",        "setting": "resort infinity pool at golden hour",         "vibe": "relaxed, glowing"},
+    {"style": "bikini beach day",     "setting": "white sand beach, clear blue water, midday",  "vibe": "playful, sun-kissed"},
+    {"style": "tropical golden hour", "setting": "palm-lined beach at sunset, warm light",       "vibe": "dreamy, warm"},
+    {"style": "fitness aesthetic",    "setting": "beachfront boardwalk at sunrise",              "vibe": "strong, energetic"},
+    {"style": "resort vacation",      "setting": "luxury beach resort balcony, ocean view",      "vibe": "breezy, elegant"},
+    {"style": "glamour swimwear",     "setting": "poolside cabana with dramatic light",          "vibe": "fierce, confident"},
+    {"style": "sunset beach party",   "setting": "beach bonfire gathering at dusk",              "vibe": "fun, magnetic"},
 ]
 
 def _seed() -> int:

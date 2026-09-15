@@ -19,11 +19,11 @@ CAPTION_TONES = [
 
 # Normal influencer hashtags — NO AI keywords (those suppress reach)
 HASHTAG_SETS = [
-    "#fashion #ootd #style #inspo #vibes #model #photography #beauty #luxury #editorial",
-    "#lifestyle #aesthetic #goals #photooftheday #instadaily #beautifulgirl #fashionista #glam #iconic #stunning",
-    "#travel #wanderlust #golden #look #explore #mood #outfitinspo #sunset #gorgeous #vibes",
-    "#fitness #gym #glow #confidence #motivation #boss #queen #hustle #selflove #bodygoals",
-    "#nightout #party #weekend #rooftop #nightlife #lit #looks #glam #luxurylife #drip",
+    "#beachvibes #bikinibody #beachday #summertime #oceanvibes #tanlines #beachlife #sunkissed #gorgeous #stunning",
+    "#poolday #swimwear #resortwear #vacationmode #tropicalvibes #golden #glow #luxurylife #travelgram #wanderlust",
+    "#beachbabe #islandlife #sunsetvibes #paradisefound #saltlife #bikini #beachbum #summerbody #instadaily #photooftheday",
+    "#fitness #beachfit #glow #confidence #motivation #boss #queen #selflove #bodygoals #strongnotskinny",
+    "#bonfire #beachparty #sunsetlovers #goldenhour #nightvibes #magic #lit #glam #vacay #summernights",
 ]
 
 _SYSTEM = (

@@ -57,15 +57,19 @@ def generate_caption(theme: dict, groq_api_key: str) -> str:
                     {"role": "system", "content": _SYSTEM},
                     {"role": "user",   "content": user_prompt},
                 ],
-                "max_tokens": 120,
+                "reasoning_effort": "low",
+                "max_tokens": 300,
                 "temperature": 0.9,
             },
             timeout=20,
         )
         if r.status_code == 200:
             text = r.json()["choices"][0]["message"]["content"].strip().strip('"')
-            return f"{text}\n\n{hashtags}"
-        print(f"  Groq {r.status_code}: {r.text[:100]}")
+            if text:
+                return f"{text}\n\n{hashtags}"
+            print("  Groq returned empty content, using fallback")
+        else:
+            print(f"  Groq {r.status_code}: {r.text[:100]}")
     except Exception as e:
         print(f"  Caption error: {e}")
 

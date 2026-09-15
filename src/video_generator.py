@@ -67,7 +67,7 @@ def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> 
     )
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=420)
     except subprocess.TimeoutExpired:
         print("  ffmpeg timed out")
         return None

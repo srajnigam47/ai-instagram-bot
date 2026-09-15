@@ -1,18 +1,21 @@
 """
-Image Generator — Hugging Face Inference API (FREE)
+Image Generator — Pollinations.ai (FREE, no API key required)
 Prompts use natural photography language to minimize the "AI look".
+
+Note: Hugging Face's free `hf-inference` provider stopped hosting
+FLUX/SD serverless inference in mid-2026 (models now route through paid
+providers like fal-ai/replicate only). Pollinations.ai is a genuinely
+free alternative — anonymous requests work with a small watermark;
+set POLLINATIONS_TOKEN (free signup at https://auth.pollinations.ai)
+to remove it and raise the rate limit.
 """
 
-import requests
+import os
 import base64
-import time
+import requests
+import urllib.parse
 
-HF_BASE = "https://router.huggingface.co/hf-inference/models"
-
-HF_MODELS = [
-    "black-forest-labs/FLUX.1-schnell",
-    "black-forest-labs/FLUX.1-dev",
-]
+POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 
 # Rotate character descriptions so the "face" varies day to day
 CHARACTERS = [
@@ -74,41 +77,28 @@ def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
     )
 
 def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int = 1344) -> bytes | None:
-    headers = {"Authorization": f"Bearer {api_key}"}
+    """Generate an image via Pollinations.ai. `api_key` kept for call-site
+    compatibility but unused — auth is via POLLINATIONS_TOKEN if set."""
+    token = os.environ.get("POLLINATIONS_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
 
-    for model in HF_MODELS:
-        url = f"{HF_BASE}/{model}"
-        print(f"  Trying {model.split('/')[-1]}...")
+    encoded_prompt = urllib.parse.quote(prompt)
+    url = f"{POLLINATIONS_BASE}/{encoded_prompt}"
+    params = {
+        "width": width,
+        "height": height,
+        "model": "flux",
+        "nologo": "true",
+    }
 
-        # Try with portrait dimensions first
-        for payload in [
-            {"inputs": prompt, "parameters": {"width": width, "height": height}},
-            {"inputs": prompt},
-        ]:
-            try:
-                r = requests.post(url, headers=headers, json=payload, timeout=120)
-                ct = r.headers.get("content-type", "")
-                if r.status_code == 200 and ct.startswith("image"):
-                    return r.content
-                elif r.status_code == 503:
-                    print("  Model loading, retrying in 20s...")
-                    time.sleep(20)
-                    r = requests.post(url, headers=headers, json=payload, timeout=120)
-                    if r.status_code == 200 and r.headers.get("content-type", "").startswith("image"):
-                        return r.content
-                    break
-                elif r.status_code in (400, 422):
-                    # Parameters not supported — try without
-                    if "parameters" in payload:
-                        continue
-                    print(f"  {model.split('/')[-1]}: HTTP {r.status_code}")
-                    break
-                else:
-                    print(f"  {model.split('/')[-1]}: HTTP {r.status_code}")
-                    break
-            except Exception as e:
-                print(f"  HF error: {e}")
-                break
+    try:
+        r = requests.get(url, headers=headers, params=params, timeout=120)
+        ct = r.headers.get("content-type", "")
+        if r.status_code == 200 and ct.startswith("image"):
+            return r.content
+        print(f"  Pollinations: HTTP {r.status_code} — {r.text[:200]}")
+    except Exception as e:
+        print(f"  Pollinations error: {e}")
 
     return None
 

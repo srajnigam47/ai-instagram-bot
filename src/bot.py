@@ -4,6 +4,7 @@ Posts AI-generated Reels with music to Instagram 3x/day.
 """
 
 import os
+import sys
 import time
 import tempfile
 from datetime import datetime
@@ -37,9 +38,10 @@ def _seed() -> int:
     # Unique per day × posting slot so each run gets different prompts
     return now.timetuple().tm_yday * 10 + (now.hour // 5)
 
-def _post_image(image_url: str, caption: str):
+def _post_image(image_url: str, caption: str) -> bool:
     result = post_to_instagram(image_url, caption, INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID)
     print(f"  Image post ID: {result}" if result else "  Image post also failed.")
+    return bool(result)
 
 def run_bot():
     print(f"Bot starting — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -58,7 +60,7 @@ def run_bot():
     image_url = generate_image(theme, HF_API_KEY, IMGBB_API_KEY, seed)
     if not image_url:
         print("  Image generation failed. Aborting.")
-        return
+        sys.exit(1)
     print(f"  {image_url}")
 
     # 3. Video + music
@@ -68,7 +70,8 @@ def run_bot():
 
         if not video:
             print("  Video failed — posting image instead.")
-            _post_image(image_url, caption)
+            if not _post_image(image_url, caption):
+                sys.exit(1)
             return
 
         print(f"  Video: {len(video) // 1024}KB")
@@ -82,7 +85,8 @@ def run_bot():
 
         if not video_url:
             print("  Upload failed — posting image instead.")
-            _post_image(image_url, caption)
+            if not _post_image(image_url, caption):
+                sys.exit(1)
             return
 
         post_id = post_reel_to_instagram(
@@ -93,7 +97,8 @@ def run_bot():
             print(f"\nReel posted! ID: {post_id}")
         else:
             print("  Reel failed — posting image instead.")
-            _post_image(image_url, caption)
+            if not _post_image(image_url, caption):
+                sys.exit(1)
 
         # Clean up the temporary GitHub Release
         time.sleep(30)

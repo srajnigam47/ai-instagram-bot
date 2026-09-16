@@ -31,28 +31,34 @@ def verify_token(access_token: str, account_id: str) -> bool:
         print(f"  Token check error: {e}")
         return False
 
-def create_media_container(image_url: str, caption: str, access_token: str, account_id: str) -> str | None:
+def create_media_container(image_url: str, caption: str, access_token: str, account_id: str, retries: int = 3) -> str | None:
+    """Meta's server-side fetch of image_url is known to fail transiently
+    even when the URL is perfectly reachable — retry a few times."""
     url = f"{GRAPH_API_BASE}/{account_id}/media"
-    try:
-        response = requests.post(
-            url,
-            headers=_headers(access_token),
-            json={
-                "image_url": image_url,
-                "caption": caption,
-                "media_type": "IMAGE",
-            },
-            timeout=30
-        )
-        data = response.json()
-        if "id" in data:
-            print(f"  Media container created: {data['id']}")
-            return data["id"]
-        print(f"  ❌ Container creation failed: {data}")
-        return None
-    except Exception as e:
-        print(f"  ❌ Container error: {e}")
-        return None
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.post(
+                url,
+                headers=_headers(access_token),
+                json={
+                    "image_url": image_url,
+                    "caption": caption,
+                    "media_type": "IMAGE",
+                },
+                timeout=30
+            )
+            data = response.json()
+            if "id" in data:
+                print(f"  Media container created: {data['id']}")
+                return data["id"]
+            print(f"  ❌ Container creation failed (attempt {attempt}/{retries}): {data}")
+        except Exception as e:
+            print(f"  ❌ Container error (attempt {attempt}/{retries}): {e}")
+
+        if attempt < retries:
+            time.sleep(15)
+
+    return None
 
 def wait_for_container(container_id: str, access_token: str, max_wait: int = 60) -> bool:
     url = f"{GRAPH_API_BASE}/{container_id}"

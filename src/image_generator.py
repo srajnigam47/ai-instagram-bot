@@ -17,21 +17,26 @@ import urllib.parse
 
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 
-# Rotate character descriptions so the "face" varies day to day
+# Rotate character descriptions so multiple distinct "models" appear, not one repeated face
 CHARACTERS = [
-    "A woman in her mid-twenties with long dark wavy hair past her shoulders, warm olive skin, dark almond eyes, full lips",
-    "A young woman with straight black hair cut to her collarbone, angular jawline, tan skin, deep brown eyes",
-    "A woman with long dark hair and subtle auburn highlights, heart-shaped face, caramel skin, hazel eyes",
-    "A mid-twenties woman with thick dark hair pulled half-up, light brown eyes, golden tan skin, soft features",
-    "A young woman with dark hair in loose waves, sharp cheekbones, bronzed skin, almond-shaped eyes, confident look",
+    "An Indian woman in her mid-twenties with long dark wavy hair past her shoulders, warm wheatish skin, dark almond eyes, full lips, curvy figure",
+    "A young Indian woman with straight black hair cut to her collarbone, angular jawline, tan skin, deep brown eyes, athletic toned figure",
+    "An Indian woman with long dark hair and subtle brown highlights, heart-shaped face, caramel skin, hazel eyes, hourglass figure",
+    "A mid-twenties Indian woman with thick dark hair pulled half-up, light brown eyes, golden tan skin, soft features, curvy figure",
+    "A young Indian woman with dark hair in loose waves, sharp cheekbones, bronzed skin, almond-shaped eyes, confident look, hourglass figure",
+    "A South Indian woman in her mid-twenties, long straight jet-black hair, deep bronze skin, large expressive dark eyes, curvy figure",
+    "A Punjabi woman with wavy chestnut-highlighted hair, fair wheatish skin, sharp features, hazel eyes, tall slender figure",
+    "A Bengali woman with dark hair in a low bun, warm olive skin, soft round face, expressive kohl-lined eyes, curvy figure",
+    "An Indian woman with shoulder-length layered hair, sun-kissed tan skin, high cheekbones, bright smile, athletic curvy figure",
+    "A young Indian woman with long dark hair, deep brown skin, striking features, confident expression, petite curvy figure",
 ]
 
 CAMERA_STYLES = [
-    "Canon EOS R5, 85mm portrait lens, f/1.8, shallow depth of field",
-    "Sony A7R IV, 50mm, natural window light",
-    "Leica Q2, candid moment, warm afternoon light",
-    "shot on film, Kodak Portra 400, slightly warm tones",
-    "editorial photography, clean professional lighting",
+    "shot on iPhone 15 Pro front camera, mirror selfie, natural lighting, slightly casual framing",
+    "shot on iPhone, candid phone photo, natural light, realistic phone camera grain",
+    "phone camera selfie, casual pose, warm natural lighting, authentic amateur photo feel",
+    "shot on iPhone, natural daylight, candid unposed moment",
+    "phone camera quality, warm ambient lighting, casual selfie angle",
 ]
 
 OUTFITS = {
@@ -45,7 +50,7 @@ OUTFITS = {
     "sunset beach party":   ["boho bikini with layered necklaces", "backless swim romper", "fringe bikini set"],
 }
 
-SAFETY_SUFFIX = "tasteful and fully covered swimwear, non-explicit, SFW, appropriate for Instagram community guidelines"
+SAFETY_SUFFIX = "confident swimwear/fashion photography, no nudity, no exposed nipples or genitals, not sexually explicit"
 
 def _pick(lst, seed):
     return lst[seed % len(lst)]
@@ -58,7 +63,8 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
     return (
         f"{char}. She is wearing {outfit}. "
         f"She is at {theme['setting']}, {theme['vibe']} mood, relaxed natural pose. "
-        f"{camera}. Instagram lifestyle photo. {SAFETY_SUFFIX}."
+        f"{camera}. Candid real-life Instagram photo, not a professional photoshoot, "
+        f"authentic and unfiltered feel. {SAFETY_SUFFIX}."
     )
 
 def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
@@ -68,7 +74,7 @@ def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
 
     shot_angles = [
         f"full body shot showing her complete look, {theme['setting']}, golden hour light",
-        "close-up portrait from the shoulders up, looking directly at camera, soft natural smile, beautiful bokeh background",
+        "mirror selfie, phone visible in reflection, casual pose, looking at her own reflection",
         f"mid shot from the waist up, candid moment, looking slightly to the side, {theme['setting']}",
     ]
     angle = _pick(shot_angles, shot)

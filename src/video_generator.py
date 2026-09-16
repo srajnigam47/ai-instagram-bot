@@ -21,7 +21,13 @@ def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> 
     filter_parts = []
 
     for i, img in enumerate(image_paths):
-        inputs += ["-loop", "1", "-t", str(duration_each + 1), "-i", img]
+        # A single input frame: zoompan below generates exactly `d` output
+        # frames from it. Without this, "-loop 1 -t N" defaults to ~25fps,
+        # feeding zoompan dozens of duplicate frames — and it emits `d`
+        # frames for EACH one it receives, blowing the video up ~100x
+        # (measured: a 12s clip came out 506s long and never finished
+        # encoding within any reasonable timeout).
+        inputs += ["-loop", "1", "-framerate", "1", "-t", "0.5", "-i", img]
         d = duration_each * fps
         # Alternate zoom direction for cinematic variety
         if i % 2 == 0:
@@ -67,7 +73,7 @@ def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> 
     )
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
         print("  ffmpeg timed out")
         return None

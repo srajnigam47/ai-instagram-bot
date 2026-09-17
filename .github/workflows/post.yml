@@ -2,11 +2,13 @@ name: AI Instagram Bot
 
 on:
   schedule:
-    - cron: '30 1 * * *'   # 7:00 AM IST
-    - cron: '0 5 * * *'    # 10:30 AM IST
-    - cron: '0 8 * * *'    # 1:30 PM IST
-    - cron: '30 11 * * *'  # 5:00 PM IST
-    - cron: '30 15 * * *'  # 9:00 PM IST
+    # Frequent check-in instead of exact-time slots: GitHub's cron
+    # trigger is known to silently skip firings on low-traffic repos,
+    # so 5 exact slots means any one dropped firing = a missed post.
+    # bot.py only actually posts if >=4.5h passed since the last post
+    # (see src/post_state.py), targeting ~5 posts/day. Offset by 7/37
+    # past the hour to avoid the most congested :00/:30 trigger times.
+    - cron: '7,37 * * * *'
 
   workflow_dispatch:
     inputs:
@@ -46,7 +48,7 @@ jobs:
           ffmpeg -version | head -1
 
       - name: Install Python dependencies
-        run: pip install requests
+        run: pip install requests pillow
 
       - name: Run Instagram Bot
         env:

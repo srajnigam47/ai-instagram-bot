@@ -11,11 +11,18 @@ to remove it and raise the rate limit.
 """
 
 import os
+import io
 import base64
 import requests
 import urllib.parse
+from PIL import Image
 
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
+
+# The free Pollinations tier caps actual output around ~0.6MP no matter
+# what width/height is requested (measured: asking for 1080x1920 returns
+# ~580x1015). Upscale before posting so Instagram doesn't have to.
+TARGET_WIDTH = 1080
 
 # Rotate character descriptions so multiple distinct "models" appear, not one repeated face
 CHARACTERS = [
@@ -126,11 +133,30 @@ def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
         print(f"  ImgBB error: {e}")
         return None
 
+def upscale(image_bytes: bytes, target_width: int = TARGET_WIDTH) -> bytes:
+    """Lanczos upscale to at least target_width — doesn't invent detail,
+    but is a cleaner resize than what Instagram's client would do to a
+    ~580px-wide source, and normalizes output size across posts."""
+    try:
+        im = Image.open(io.BytesIO(image_bytes))
+        if im.width >= target_width:
+            return image_bytes
+        scale = target_width / im.width
+        new_size = (target_width, round(im.height * scale))
+        im = im.convert("RGB").resize(new_size, Image.LANCZOS)
+        out = io.BytesIO()
+        im.save(out, format="JPEG", quality=92)
+        return out.getvalue()
+    except Exception as e:
+        print(f"  Upscale error (using original): {e}")
+        return image_bytes
+
 def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str, seed: int = 0) -> str | None:
     prompt = build_prompt(theme, seed)
     print(f"  Prompt: {prompt[:120]}...")
     image_bytes = generate_hf_image(prompt, hf_api_key)
     if not image_bytes:
         return None
+    image_bytes = upscale(image_bytes)
     print("  Uploading to ImgBB...")
     return upload_to_imgbb(image_bytes, imgbb_api_key)

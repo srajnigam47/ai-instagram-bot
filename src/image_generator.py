@@ -118,6 +118,50 @@ def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int =
 
     return None
 
+GEMINI_MODEL = "gemini-3.1-flash-image"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/models/{GEMINI_MODEL}:generateContent"
+
+def generate_gemini_image(prompt: str) -> bytes | None:
+    """Generate via Gemini (Nano Banana), if GEMINI_API_KEY is set. Real
+    photorealism, but Google's own safety filter can refuse swimwear-
+    adjacent prompts — caller should fall back to Pollinations on None."""
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    try:
+        r = requests.post(
+            GEMINI_URL,
+            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+            json={"contents": [{"parts": [{"text": prompt}]}]},
+            timeout=60,
+        )
+        if r.status_code != 200:
+            print(f"  Gemini: HTTP {r.status_code} — {r.text[:200]}")
+            return None
+        parts = r.json().get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        for part in parts:
+            inline = part.get("inlineData")
+            if inline and inline.get("data"):
+                return base64.b64decode(inline["data"])
+        # No image part usually means a safety refusal explained in text
+        refusal = " ".join(p.get("text", "") for p in parts if "text" in p)
+        print(f"  Gemini returned no image (likely refused): {refusal[:200]}")
+        return None
+    except Exception as e:
+        print(f"  Gemini error: {e}")
+        return None
+
+def generate_image_bytes(prompt: str, hf_api_key: str) -> tuple[bytes, str] | tuple[None, None]:
+    """Try Gemini first if configured (better quality), fall back to the
+    always-available Pollinations source. Returns (bytes, source_name)."""
+    gemini_bytes = generate_gemini_image(prompt)
+    if gemini_bytes:
+        return gemini_bytes, "gemini"
+    pollinations_bytes = generate_hf_image(prompt, hf_api_key)
+    if pollinations_bytes:
+        return pollinations_bytes, "pollinations"
+    return None, None
+
 def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
     try:
         b64 = base64.b64encode(image_bytes).decode()
@@ -134,30 +178,31 @@ def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
         print(f"  ImgBB error: {e}")
         return None
 
-def process_image(image_bytes: bytes, target_width: int = TARGET_WIDTH) -> bytes:
-    """Upscale + photographic post-processing. The free model's raw output
-    is both low-res (~580px capped, see TARGET_WIDTH comment) and has a
-    glossy/plastic "obviously AI" look baked in that prompt wording alone
-    couldn't shake (tested extensively). Grain + slight blur/resharpen +
-    a small desaturation pass breaks up that over-clean rendered look and
-    reads more like a real phone photo, on top of being sharper overall."""
+def process_image(image_bytes: bytes, target_width: int = TARGET_WIDTH, add_grain: bool = True) -> bytes:
+    """Upscale + optional photographic post-processing. `add_grain` compensates
+    for Pollinations' raw output being both low-res (~580px capped, see
+    TARGET_WIDTH comment) and having a glossy/plastic "obviously AI" look
+    that prompt wording alone couldn't shake (tested extensively). Skip it
+    for Gemini output, which is already higher quality and doesn't need
+    the fake-imperfection treatment."""
     try:
         im = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         if im.width < target_width:
             scale = target_width / im.width
             im = im.resize((target_width, round(im.height * scale)), Image.LANCZOS)
 
-        arr = np.array(im).astype(np.float32)
-        noise = np.random.normal(0, 6.5, arr.shape[:2])[:, :, None]
-        im = Image.fromarray(np.clip(arr + noise, 0, 255).astype(np.uint8))
+        if add_grain:
+            arr = np.array(im).astype(np.float32)
+            noise = np.random.normal(0, 6.5, arr.shape[:2])[:, :, None]
+            im = Image.fromarray(np.clip(arr + noise, 0, 255).astype(np.uint8))
 
-        im = im.filter(ImageFilter.GaussianBlur(radius=0.6))
-        im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=80, threshold=2))
-        im = ImageEnhance.Color(im).enhance(0.92)
-        im = ImageEnhance.Contrast(im).enhance(0.97)
+            im = im.filter(ImageFilter.GaussianBlur(radius=0.6))
+            im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=80, threshold=2))
+            im = ImageEnhance.Color(im).enhance(0.92)
+            im = ImageEnhance.Contrast(im).enhance(0.97)
 
         out = io.BytesIO()
-        im.save(out, format="JPEG", quality=90)
+        im.save(out, format="JPEG", quality=92)
         return out.getvalue()
     except Exception as e:
         print(f"  Image processing error (using original): {e}")
@@ -166,9 +211,10 @@ def process_image(image_bytes: bytes, target_width: int = TARGET_WIDTH) -> bytes
 def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str, seed: int = 0) -> str | None:
     prompt = build_prompt(theme, seed)
     print(f"  Prompt: {prompt[:120]}...")
-    image_bytes = generate_hf_image(prompt, hf_api_key)
+    image_bytes, source = generate_image_bytes(prompt, hf_api_key)
     if not image_bytes:
         return None
-    image_bytes = process_image(image_bytes)
+    print(f"  Source: {source}")
+    image_bytes = process_image(image_bytes, add_grain=(source != "gemini"))
     print("  Uploading to ImgBB...")
     return upload_to_imgbb(image_bytes, imgbb_api_key)

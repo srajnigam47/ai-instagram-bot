@@ -109,7 +109,7 @@ def generate_video(
         prompt = build_shot_prompt(theme, shot, seed)
         img_bytes, source = generate_image_bytes(prompt, hf_api_key)
         if img_bytes:
-            img_bytes = process_image(img_bytes, add_grain=(source != "gemini"))
+            img_bytes = process_image(img_bytes, add_grain=(source == "pollinations"))
             p = os.path.join(tmp_dir, f"shot{shot}.jpg")
             with open(p, "wb") as f:
                 f.write(img_bytes)

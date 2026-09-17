@@ -118,6 +118,45 @@ def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int =
 
     return None
 
+CLOUDFLARE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+
+def generate_cloudflare_image(prompt: str, width: int = 768, height: int = 1344) -> bytes | None:
+    """Generate via Cloudflare Workers AI (real SDXL), if CLOUDFLARE_ACCOUNT_ID
+    and CLOUDFLARE_API_TOKEN are set. Genuinely free permanent daily quota
+    (10k neurons/day, no card required) from a stable major provider —
+    unlike Gemini's free image tier, which got discontinued. 768x1344 is
+    one of SDXL's native trained resolution buckets (closest to 9:16)."""
+    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+    api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    if not account_id or not api_token:
+        return None
+    url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{CLOUDFLARE_MODEL}"
+    try:
+        r = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {api_token}"},
+            json={"prompt": prompt, "width": width, "height": height},
+            timeout=60,
+        )
+        if r.status_code != 200:
+            print(f"  Cloudflare: HTTP {r.status_code} — {r.text[:200]}")
+            return None
+        ct = r.headers.get("content-type", "")
+        if ct.startswith("image"):
+            return r.content
+        # Some Workers AI responses wrap the image as base64 JSON instead
+        try:
+            b64 = r.json().get("result", {}).get("image")
+            if b64:
+                return base64.b64decode(b64)
+        except Exception:
+            pass
+        print(f"  Cloudflare: unexpected response (content-type={ct}) — {r.text[:200]}")
+        return None
+    except Exception as e:
+        print(f"  Cloudflare error: {e}")
+        return None
+
 GEMINI_MODEL = "gemini-3.1-flash-image"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/models/{GEMINI_MODEL}:generateContent"
 
@@ -152,8 +191,11 @@ def generate_gemini_image(prompt: str) -> bytes | None:
         return None
 
 def generate_image_bytes(prompt: str, hf_api_key: str) -> tuple[bytes, str] | tuple[None, None]:
-    """Try Gemini first if configured (better quality), fall back to the
+    """Try better sources first if configured, fall back to the
     always-available Pollinations source. Returns (bytes, source_name)."""
+    cf_bytes = generate_cloudflare_image(prompt)
+    if cf_bytes:
+        return cf_bytes, "cloudflare"
     gemini_bytes = generate_gemini_image(prompt)
     if gemini_bytes:
         return gemini_bytes, "gemini"
@@ -215,6 +257,6 @@ def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str, seed: int =
     if not image_bytes:
         return None
     print(f"  Source: {source}")
-    image_bytes = process_image(image_bytes, add_grain=(source != "gemini"))
+    image_bytes = process_image(image_bytes, add_grain=(source == "pollinations"))
     print("  Uploading to ImgBB...")
     return upload_to_imgbb(image_bytes, imgbb_api_key)

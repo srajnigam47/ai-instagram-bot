@@ -15,7 +15,8 @@ import io
 import base64
 import requests
 import urllib.parse
-from PIL import Image
+import numpy as np
+from PIL import Image, ImageFilter, ImageEnhance
 
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 
@@ -133,22 +134,33 @@ def upload_to_imgbb(image_bytes: bytes, api_key: str) -> str | None:
         print(f"  ImgBB error: {e}")
         return None
 
-def upscale(image_bytes: bytes, target_width: int = TARGET_WIDTH) -> bytes:
-    """Lanczos upscale to at least target_width — doesn't invent detail,
-    but is a cleaner resize than what Instagram's client would do to a
-    ~580px-wide source, and normalizes output size across posts."""
+def process_image(image_bytes: bytes, target_width: int = TARGET_WIDTH) -> bytes:
+    """Upscale + photographic post-processing. The free model's raw output
+    is both low-res (~580px capped, see TARGET_WIDTH comment) and has a
+    glossy/plastic "obviously AI" look baked in that prompt wording alone
+    couldn't shake (tested extensively). Grain + slight blur/resharpen +
+    a small desaturation pass breaks up that over-clean rendered look and
+    reads more like a real phone photo, on top of being sharper overall."""
     try:
-        im = Image.open(io.BytesIO(image_bytes))
-        if im.width >= target_width:
-            return image_bytes
-        scale = target_width / im.width
-        new_size = (target_width, round(im.height * scale))
-        im = im.convert("RGB").resize(new_size, Image.LANCZOS)
+        im = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        if im.width < target_width:
+            scale = target_width / im.width
+            im = im.resize((target_width, round(im.height * scale)), Image.LANCZOS)
+
+        arr = np.array(im).astype(np.float32)
+        noise = np.random.normal(0, 6.5, arr.shape[:2])[:, :, None]
+        im = Image.fromarray(np.clip(arr + noise, 0, 255).astype(np.uint8))
+
+        im = im.filter(ImageFilter.GaussianBlur(radius=0.6))
+        im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=80, threshold=2))
+        im = ImageEnhance.Color(im).enhance(0.92)
+        im = ImageEnhance.Contrast(im).enhance(0.97)
+
         out = io.BytesIO()
-        im.save(out, format="JPEG", quality=92)
+        im.save(out, format="JPEG", quality=90)
         return out.getvalue()
     except Exception as e:
-        print(f"  Upscale error (using original): {e}")
+        print(f"  Image processing error (using original): {e}")
         return image_bytes
 
 def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str, seed: int = 0) -> str | None:
@@ -157,6 +169,6 @@ def generate_image(theme: dict, hf_api_key: str, imgbb_api_key: str, seed: int =
     image_bytes = generate_hf_image(prompt, hf_api_key)
     if not image_bytes:
         return None
-    image_bytes = upscale(image_bytes)
+    image_bytes = process_image(image_bytes)
     print("  Uploading to ImgBB...")
     return upload_to_imgbb(image_bytes, imgbb_api_key)

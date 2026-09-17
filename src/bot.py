@@ -23,10 +23,10 @@ GROQ_API_KEY           = os.environ["GROQ_API_KEY"]
 HF_API_KEY             = os.environ["HF_API_KEY"]
 IMGBB_API_KEY          = os.environ["IMGBB_API_KEY"]
 
-# Target ~5 posts/day. The workflow runs every 30 min as a cheap check-in
-# (GitHub's own cron trigger is known to silently skip firings on
-# low-traffic repos) rather than 5 exact-time slots that all must fire.
-MIN_POST_INTERVAL = timedelta(hours=4, minutes=30)
+# Target ~9-10 posts/day. The workflow runs every 30 min as a cheap
+# check-in (GitHub's own cron trigger is known to silently skip firings
+# on low-traffic repos) rather than exact-time slots that all must fire.
+MIN_POST_INTERVAL = timedelta(hours=2, minutes=30)
 
 THEMES = [
     {"style": "beach lifestyle",      "setting": "tropical beach at sunset, turquoise water",   "vibe": "carefree, radiant"},

@@ -6,7 +6,7 @@ Video Generator — FREE
 import os
 import subprocess
 import requests
-from image_generator import generate_hf_image, build_shot_prompt
+from image_generator import generate_hf_image, build_shot_prompt, process_image
 
 
 def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> bytes | None:
@@ -109,6 +109,7 @@ def generate_video(
         prompt    = build_shot_prompt(theme, shot, seed)
         img_bytes = generate_hf_image(prompt, hf_api_key)
         if img_bytes:
+            img_bytes = process_image(img_bytes)
             p = os.path.join(tmp_dir, f"shot{shot}.jpg")
             with open(p, "wb") as f:
                 f.write(img_bytes)

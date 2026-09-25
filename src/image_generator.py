@@ -242,13 +242,12 @@ GLAM_BOOST = (
 )
 
 
-BODY_BOOST_CHANCE = 0.85
+BODY_BOOST_CHANCE = 1.0
 
 BODY_BOOST = (
-    "naturally fuller feminine proportions, "
-    "noticeably curvy silhouette, "
-    "fuller hips and thighs, "
-    "defined waist, "
+    "voluptuous curvy figure, dramatically fuller hips and thighs, "
+    "wide curvy hips, thick thighs, "
+    "sharply defined narrow waist, hourglass silhouette, "
     "realistic body proportions"
 )
 

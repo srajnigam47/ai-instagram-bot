@@ -48,7 +48,15 @@ def decide_overlay_text() -> str | None:
 
 def add_overlay_text(im: Image.Image, text: str) -> Image.Image:
     """Burn the given phrase onto the image, styled like real Reels text
-    overlays: bold white text with a dark shadow, upper-third placement."""
+    overlays: bold white text with a dark shadow.
+
+    Positioned around 68% down the frame rather than near the top: our
+    prompts request head-to-knees full-body framing, so the top ~25% is
+    where the face/head actually sits (confirmed by a real test post -
+    top-third text landed right across the face). The ~68-82% band sits
+    below the torso/face and above where Instagram's own UI chrome
+    (caption, like/comment icons) covers the bottom ~15% in the Reels
+    player, so it clears both without needing real face detection."""
     im = im.convert("RGB")
     draw = ImageDraw.Draw(im)
 
@@ -71,7 +79,7 @@ def add_overlay_text(im: Image.Image, text: str) -> Image.Image:
         lines.append(current)
 
     line_height = int(font_size * 1.25)
-    y = int(im.height * 0.12)
+    y = int(im.height * 0.68)
 
     for line in lines:
         line_width = draw.textlength(line, font=font)

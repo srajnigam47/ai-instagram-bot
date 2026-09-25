@@ -34,10 +34,26 @@ _SYSTEM = (
     "Return ONLY the caption text, nothing else, no quotes."
 )
 
+# Occasionally use a longer, narrative "story" caption instead of the usual
+# short punchy line — flirty and playful, ends with a comment-bait question.
+# Stays SFW/suggestive-at-most, same boundary as everything else here.
+STORY_CHANCE = 0.2
+_STORY_SYSTEM = (
+    "You are a copywriter for a top Instagram influencer. "
+    "Write a short 2-4 sentence story/scenario caption — a tiny flirty "
+    "moment from her day. Playful, teasing, confident tone. Write as a "
+    "confident real woman — never mention AI. "
+    "End with a fun, flirty question that invites comments. "
+    "Keep it playful and suggestive at most — never explicit or vulgar, "
+    "appropriate for Instagram. Under 400 characters total. "
+    "Return ONLY the caption text, nothing else, no quotes."
+)
+
 
 def generate_caption(theme: dict, groq_api_key: str) -> str:
     tone     = random.choice(CAPTION_TONES)
     hashtags = random.choice(HASHTAG_SETS)
+    is_story = random.random() < STORY_CHANCE
 
     user_prompt = (
         f"{theme['style']} shoot at {theme['setting']}, {theme['vibe']} energy. "
@@ -54,11 +70,11 @@ def generate_caption(theme: dict, groq_api_key: str) -> str:
             json={
                 "model": "openai/gpt-oss-120b",
                 "messages": [
-                    {"role": "system", "content": _SYSTEM},
+                    {"role": "system", "content": _STORY_SYSTEM if is_story else _SYSTEM},
                     {"role": "user",   "content": user_prompt},
                 ],
                 "reasoning_effort": "low",
-                "max_tokens": 300,
+                "max_tokens": 300 if is_story else 200,
                 "temperature": 0.9,
             },
             timeout=20,

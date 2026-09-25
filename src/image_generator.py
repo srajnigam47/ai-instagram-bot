@@ -13,6 +13,7 @@ to remove it and raise the rate limit.
 import os
 import io
 import base64
+import random
 import requests
 import urllib.parse
 import numpy as np
@@ -60,6 +61,13 @@ OUTFITS = {
 
 SAFETY_SUFFIX = "confident swimwear/fashion photography, no nudity, no exposed nipples or genitals, not sexually explicit"
 
+# Every now and then, push an extra beauty/glam boost into the prompt
+GLAM_CHANCE = 0.25
+GLAM_BOOST = "stunning jaw-dropping beauty, flawless radiant skin, captivating gorgeous features"
+
+def _maybe_glam() -> str:
+    return f" {GLAM_BOOST}." if random.random() < GLAM_CHANCE else ""
+
 def _pick(lst, seed):
     return lst[seed % len(lst)]
 
@@ -72,7 +80,7 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
         f"{char}. She is wearing {outfit}. "
         f"She is at {theme['setting']}, {theme['vibe']} mood, relaxed natural pose. "
         f"{camera}. Candid real-life Instagram photo, not a professional photoshoot, "
-        f"authentic and unfiltered feel. {SAFETY_SUFFIX}."
+        f"authentic and unfiltered feel.{_maybe_glam()} {SAFETY_SUFFIX}."
     )
 
 def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
@@ -89,7 +97,7 @@ def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
 
     return (
         f"{char}, wearing {outfit}. {angle}. "
-        f"{theme['vibe'].capitalize()} expression. {camera}. {SAFETY_SUFFIX}."
+        f"{theme['vibe'].capitalize()} expression. {camera}.{_maybe_glam()} {SAFETY_SUFFIX}."
     )
 
 def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int = 1344) -> bytes | None:

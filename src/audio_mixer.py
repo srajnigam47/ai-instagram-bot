@@ -1,47 +1,34 @@
 """
-Audio Mixer — downloads royalty-free music; falls back to ffmpeg synthetic beat.
+Audio Mixer — picks from bundled royalty-free tracks; falls back to
+ffmpeg synthetic beat if something's wrong with the local files.
+
+Tracks in src/music/ are by Kevin MacLeod (incompetech.com), licensed
+CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/) - free to use
+including commercially, but requires attribution. Bundled locally
+instead of downloaded at runtime because relying on incompetech.com
+from GitHub Actions' shared IP ranges was unreliable (~2 of 5 tracks
+succeeding per run; incompetech.com occasionally rate-limits/blocks
+those IPs, and the archive.org backup URLs were permanently dead).
 """
 
 import subprocess
-import requests
 import random
 import os
+import glob
 
-# Royalty-free tracks (CC0 / public domain)
-MUSIC_URLS = [
-    # Kevin MacLeod — incompetech.com direct CDN
-    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Funkorama.mp3",
-    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Electro%20Sketch.mp3",
-    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Hyperfun.mp3",
-    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Blippy%20Trance.mp3",
-    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3",
-    # Archive.org backups
-    "https://archive.org/download/Kevin_MacLeod_-_Funkorama/Funkorama.mp3",
-    "https://archive.org/download/Kevin_MacLeod_-_Rollin_at_5/Rollin_at_5.mp3",
-]
+MUSIC_DIR = os.path.join(os.path.dirname(__file__), "music")
+
+MUSIC_ATTRIBUTION = "Music: Kevin MacLeod (incompetech.com) — CC BY 3.0"
 
 
-def download_music(tmp_dir: str) -> str | None:
-    urls = MUSIC_URLS.copy()
-    random.shuffle(urls)
-    for url in urls:
-        try:
-            print(f"  Downloading: {url.split('/')[-1]}")
-            r = requests.get(
-                url, timeout=25,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; bot)"},
-                allow_redirects=True,
-            )
-            if r.status_code == 200 and len(r.content) > 20_000:
-                p = os.path.join(tmp_dir, "music.mp3")
-                with open(p, "wb") as f:
-                    f.write(r.content)
-                print(f"  Music OK ({len(r.content) // 1024}KB)")
-                return p
-            print(f"  {url.split('/')[-1]}: HTTP {r.status_code}")
-        except Exception as e:
-            print(f"  Download failed: {e}")
-    return None
+def pick_music(tmp_dir: str) -> str | None:
+    tracks = glob.glob(os.path.join(MUSIC_DIR, "*.mp3"))
+    if not tracks:
+        print(f"  No bundled tracks found in {MUSIC_DIR}")
+        return None
+    track = random.choice(tracks)
+    print(f"  Using bundled track: {os.path.basename(track)}")
+    return track
 
 
 def generate_synthetic_beat(tmp_dir: str, duration: int = 12) -> str | None:
@@ -76,7 +63,7 @@ def mix_audio(video_bytes: bytes, tmp_dir: str) -> bytes:
     with open(video_in, "wb") as f:
         f.write(video_bytes)
 
-    music_path = download_music(tmp_dir) or generate_synthetic_beat(tmp_dir)
+    music_path = pick_music(tmp_dir) or generate_synthetic_beat(tmp_dir)
 
     if music_path:
         cmd = [

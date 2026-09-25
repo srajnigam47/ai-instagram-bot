@@ -26,11 +26,34 @@ HASHTAG_SETS = [
     "#bonfire #beachparty #sunsetlovers #goldenhour #nightvibes #magic #lit #glam #vacay #summernights",
 ]
 
+# Nearly every generated caption was opening with "Sun-kissed..." and
+# reaching for the same 4-5 words (waves, sand, tide, dive) regardless of
+# tone - beach-themed prompts have a narrow cliche space and temperature
+# 0.9 wasn't enough to escape it. Ban the worst offenders explicitly and
+# force a distinct structural angle each time so there's less for the
+# model to converge on.
+_BANNED_WORDS = (
+    "Do not use any of these overused words/phrases: sun-kissed, "
+    "sun kissed, waves calling, tide, dive in, salty hair, golden hour "
+    "glow, paradise found. Do not start the caption with \"Sun\" in any form."
+)
+
+CAPTION_ANGLES = [
+    "Write it as a bold statement about her, not the scenery.",
+    "Write it as a one-line joke or self-aware quip.",
+    "Write it as a direct question to the audience, no scene-setting.",
+    "Write it as a confident brag with a wink.",
+    "Write it as a short relatable thought, like a diary line.",
+    "Write it referencing a specific small detail (her outfit, a prop, "
+    "her expression) rather than the general location.",
+]
+
 _SYSTEM = (
     "You are a copywriter for a top Instagram influencer. "
     "Write captions that stop the scroll: short, punchy, unforgettable. "
     "Write as a confident real woman — never mention AI. "
     "End with a question or CTA. Under 150 characters. "
+    f"{_BANNED_WORDS} "
     "Return ONLY the caption text, nothing else, no quotes."
 )
 
@@ -46,6 +69,7 @@ _STORY_SYSTEM = (
     "End with a fun, flirty question that invites comments. "
     "Keep it playful and suggestive at most — never explicit or vulgar, "
     "appropriate for Instagram. Under 400 characters total. "
+    f"{_BANNED_WORDS} "
     "Return ONLY the caption text, nothing else, no quotes."
 )
 
@@ -53,11 +77,12 @@ _STORY_SYSTEM = (
 def generate_caption(theme: dict, groq_api_key: str) -> str:
     tone     = random.choice(CAPTION_TONES)
     hashtags = random.choice(HASHTAG_SETS)
+    angle    = random.choice(CAPTION_ANGLES)
     is_story = random.random() < STORY_CHANCE
 
     user_prompt = (
         f"{theme['style']} shoot at {theme['setting']}, {theme['vibe']} energy. "
-        f"Tone: {tone}."
+        f"Tone: {tone}. {angle}"
     )
 
     try:

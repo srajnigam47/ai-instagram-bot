@@ -8,7 +8,7 @@ text below the post.
 import random
 from PIL import Image, ImageDraw, ImageFont
 
-OVERLAY_CHANCE = 0.4
+OVERLAY_CHANCE = 0.65
 
 OVERLAY_PHRASES = [
     "Outfit of the day",

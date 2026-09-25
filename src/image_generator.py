@@ -234,7 +234,7 @@ SAFETY_SUFFIX = (
 )
 
 
-GLAM_CHANCE = 0.35
+GLAM_CHANCE = 0.6
 
 GLAM_BOOST = (
     "striking beauty, radiant natural skin, beautiful facial features, "
@@ -242,7 +242,7 @@ GLAM_BOOST = (
 )
 
 
-BODY_BOOST_CHANCE = 0.65
+BODY_BOOST_CHANCE = 0.85
 
 BODY_BOOST = (
     "naturally fuller feminine proportions, "
@@ -303,12 +303,13 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
     )
 
     return (
+        f"Full-body photograph, wide shot from head to knees, "
+        f"her complete figure clearly visible in frame. "
         f"{char}. "
         f"She is wearing {outfit}. "
         f"She is at {theme['setting']}. "
         f"{theme['vibe']} mood. "
-        f"Full-body or three-quarter-body shot clearly showing her "
-        f"complete figure and outfit, relaxed confident natural pose. "
+        f"Relaxed confident natural pose, standing, whole body in shot. "
         f"{camera}. "
         f"Candid real-life Instagram photo, "
         f"not a professional studio photoshoot, "
@@ -562,6 +563,17 @@ CLOUDFLARE_MODEL = (
     "@cf/stabilityai/stable-diffusion-xl-base-1.0"
 )
 
+# SDXL supports negative_prompt but we weren't passing one - this is a
+# real, direct lever for "looks AI" that the free Pollinations source
+# never had available.
+CLOUDFLARE_NEGATIVE_PROMPT = (
+    "3d render, cgi, digital art, illustration, painting, cartoon, anime, "
+    "airbrushed, plastic skin, waxy skin, doll-like, uncanny, artificial, "
+    "over-smoothed, symmetrical perfect face, studio backdrop, "
+    "close-up crop, headshot only, cropped body, blurry, low quality, "
+    "deformed, extra limbs, bad anatomy, watermark, text, logo"
+)
+
 
 def generate_cloudflare_image(
     prompt: str,
@@ -599,6 +611,7 @@ def generate_cloudflare_image(
             },
             json={
                 "prompt": prompt,
+                "negative_prompt": CLOUDFLARE_NEGATIVE_PROMPT,
                 "width": width,
                 "height": height
             },

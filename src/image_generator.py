@@ -56,72 +56,117 @@ CHARACTERS = [
     ),
 
     (
-        "An adult Indian woman in her mid-twenties with straight black hair "
-        "falling to her shoulders, tan skin, deep brown eyes, a curvy athletic "
-        "build, strong legs, fuller thighs, rounded hips, defined waist and "
-        "natural feminine proportions"
-    ),
-
-    (
-        "An adult Indian woman in her mid-twenties with long dark hair and "
-        "subtle brown highlights, caramel skin, hazel-brown eyes, a fuller "
-        "hourglass figure, rounded hips, thick thighs, defined waist and "
-        "naturally curvy proportions"
-    ),
-
-    (
-        "An adult Indian woman in her mid-twenties with thick dark hair pulled "
-        "half-up, golden tan skin, light brown eyes, soft facial features, "
-        "a voluptuous curvy figure, fuller hips and thighs, defined waist and "
-        "balanced natural proportions"
-    ),
-
-    (
-        "An adult Indian woman in her mid-twenties with dark hair in loose "
-        "waves, bronzed skin, sharp cheekbones, almond-shaped eyes, a glamorous "
-        "hourglass figure, fuller thighs, rounded hips and a defined waist"
-    ),
-
-    (
         "An adult South Indian woman in her mid-twenties with long straight "
         "jet-black hair, deep bronze skin, large expressive dark eyes, a "
         "voluptuous curvy figure, fuller hips, fuller thighs and a defined waist"
     ),
 
     (
-        "An adult Punjabi woman in her mid-twenties with wavy chestnut-highlighted "
-        "hair, fair wheatish skin, sharp features, hazel eyes, a tall curvy "
-        "figure, rounded hips, fuller thighs and a defined waist"
+        "An adult Brazilian woman in her mid-twenties with long dark wavy "
+        "hair, sun-kissed bronze skin, deep brown eyes, a voluptuous curvy "
+        "figure, fuller hips and thighs, defined waist"
     ),
 
     (
-        "An adult Bengali woman in her mid-twenties with dark hair in a low bun, "
-        "warm olive skin, a soft round face, expressive kohl-lined eyes, a "
-        "fuller curvy figure, rounded hips and strong feminine proportions"
+        "An adult Italian woman in her mid-twenties with long dark brown "
+        "hair, olive skin, hazel eyes, sharp features, a curvy hourglass "
+        "figure, fuller hips and thighs, defined waist"
     ),
 
     (
-        "An adult Indian woman in her mid-twenties with shoulder-length layered "
-        "hair, sun-kissed tan skin, high cheekbones, bright smile, an athletic "
-        "curvy figure, fuller thighs, rounded hips and a defined waist"
+        "An adult Korean woman in her mid-twenties with long straight black "
+        "hair, fair skin, dark eyes, soft delicate features, a curvy figure, "
+        "fuller hips and thighs, defined waist"
     ),
 
     (
-        "An adult Indian woman in her mid-twenties with long dark hair, deep "
-        "brown skin, striking features, confident expression, a petite but "
-        "noticeably curvy figure, rounded hips and fuller thighs"
+        "An adult Nigerian woman in her mid-twenties with dark curly hair, "
+        "deep rich brown skin, striking dark eyes, a voluptuous curvy "
+        "figure, dramatically fuller hips and thighs, defined waist"
     ),
 
     (
-        "An adult Indian woman in her mid-twenties with glossy dark hair, "
-        "golden-brown skin, expressive brown eyes, a glamorous fuller hourglass "
-        "figure, rounded hips, fuller thighs and a defined waist"
+        "An adult Russian woman in her mid-twenties with long light blonde "
+        "hair, fair skin, pale blue eyes, sharp cheekbones, a curvy hourglass "
+        "figure, fuller hips and thighs, defined waist"
     ),
 
     (
-        "An adult Indian woman in her mid-twenties with long naturally wavy "
-        "hair, warm brown skin, soft features, a fuller pear-shaped figure, "
-        "prominent hips, fuller thighs and a relatively defined waist"
+        "An adult Mexican woman in her mid-twenties with long dark wavy hair, "
+        "warm tan skin, deep brown eyes, full lips, a voluptuous curvy "
+        "figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult French woman in her mid-twenties with medium-length light "
+        "brown hair, fair skin, green eyes, elegant features, a curvy figure, "
+        "fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Filipino woman in her mid-twenties with long dark hair, "
+        "tan skin, dark brown eyes, bright smile, a curvy figure, fuller "
+        "hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult American woman in her mid-twenties with long wavy dirty-"
+        "blonde hair, fair sun-kissed skin, blue-green eyes, a voluptuous "
+        "curvy figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Spanish woman in her mid-twenties with long dark hair, "
+        "olive skin, dark brown eyes, striking features, a curvy hourglass "
+        "figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Japanese woman in her mid-twenties with long straight "
+        "black hair, fair skin, dark eyes, delicate features, a curvy "
+        "figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Colombian woman in her mid-twenties with long dark curly "
+        "hair, warm caramel skin, brown eyes, a voluptuous curvy figure, "
+        "dramatically fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Lebanese woman in her mid-twenties with long dark wavy "
+        "hair, olive skin, deep brown eyes, sharp glamorous features, a "
+        "curvy hourglass figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Swedish woman in her mid-twenties with long platinum "
+        "blonde hair, fair skin, light blue eyes, a curvy figure, fuller "
+        "hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Ethiopian woman in her mid-twenties with dark curly hair, "
+        "deep brown skin, striking dark eyes, high cheekbones, a voluptuous "
+        "curvy figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Thai woman in her mid-twenties with long dark hair, tan "
+        "golden skin, dark brown eyes, soft features, a curvy figure, "
+        "fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Greek woman in her mid-twenties with long dark wavy hair, "
+        "olive sun-kissed skin, hazel eyes, a voluptuous curvy hourglass "
+        "figure, fuller hips and thighs, defined waist"
+    ),
+
+    (
+        "An adult Australian woman in her mid-twenties with long wavy "
+        "sandy-blonde hair, fair tan skin, blue eyes, a curvy athletic "
+        "figure, fuller hips and thighs, defined waist"
     ),
 ]
 

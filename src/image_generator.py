@@ -26,6 +26,8 @@ import urllib.parse
 import numpy as np
 from PIL import Image, ImageFilter, ImageEnhance
 
+from text_overlay import add_overlay_text
+
 
 # ---------------------------------------------------------------------------
 # CONFIGURATION
@@ -305,7 +307,8 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
         f"She is wearing {outfit}. "
         f"She is at {theme['setting']}. "
         f"{theme['vibe']} mood. "
-        f"Relaxed confident natural pose. "
+        f"Full-body or three-quarter-body shot clearly showing her "
+        f"complete figure and outfit, relaxed confident natural pose. "
         f"{camera}. "
         f"Candid real-life Instagram photo, "
         f"not a professional studio photoshoot, "
@@ -828,7 +831,8 @@ def upload_to_imgbb(
 def process_image(
     image_bytes: bytes,
     target_width: int = TARGET_WIDTH,
-    add_grain: bool = True
+    add_grain: bool = True,
+    overlay_text: str | None = None
 ) -> bytes:
 
     """
@@ -900,6 +904,9 @@ def process_image(
                 im
             ).enhance(0.97)
 
+        if overlay_text:
+            im = add_overlay_text(im, overlay_text)
+
         out = io.BytesIO()
 
         im.save(
@@ -928,7 +935,8 @@ def generate_image(
     theme: dict,
     hf_api_key: str,
     imgbb_api_key: str,
-    seed: int = 0
+    seed: int = 0,
+    overlay_text: str | None = None
 ) -> str | None:
 
     prompt = build_prompt(
@@ -957,13 +965,17 @@ def generate_image(
         f"  Source: {source}"
     )
 
+    if overlay_text:
+        print(f"  Overlay: {overlay_text}")
+
     # Pollinations tends to benefit from grain.
     # Higher-quality providers can skip it.
     image_bytes = process_image(
         image_bytes,
         add_grain=(
             source == "pollinations"
-        )
+        ),
+        overlay_text=overlay_text
     )
 
     print(

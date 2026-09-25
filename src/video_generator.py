@@ -87,7 +87,8 @@ def images_to_video(image_paths: list, tmp_dir: str, duration_each: int = 4) -> 
 
 
 def generate_video(
-    image_url: str, theme: dict, hf_api_key: str, tmp_dir: str, seed: int = 0
+    image_url: str, theme: dict, hf_api_key: str, tmp_dir: str, seed: int = 0,
+    overlay_text: str | None = None
 ) -> bytes | None:
     image_paths = []
 
@@ -109,7 +110,11 @@ def generate_video(
         prompt = build_shot_prompt(theme, shot, seed)
         img_bytes, source = generate_image_bytes(prompt, hf_api_key)
         if img_bytes:
-            img_bytes = process_image(img_bytes, add_grain=(source == "pollinations"))
+            img_bytes = process_image(
+                img_bytes,
+                add_grain=(source == "pollinations"),
+                overlay_text=overlay_text
+            )
             p = os.path.join(tmp_dir, f"shot{shot}.jpg")
             with open(p, "wb") as f:
                 f.write(img_bytes)

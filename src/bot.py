@@ -16,6 +16,7 @@ from caption_generator import generate_caption
 from instagram_poster  import post_to_instagram, post_reel_to_instagram
 from video_uploader    import upload_video, delete_release
 from post_state        import get_last_post_time, set_last_post_time
+from text_overlay      import decide_overlay_text
 
 INSTAGRAM_ACCESS_TOKEN = os.environ["INSTAGRAM_ACCESS_TOKEN"]
 INSTAGRAM_ACCOUNT_ID   = os.environ["INSTAGRAM_ACCOUNT_ID"]
@@ -75,9 +76,13 @@ def run_bot():
     caption = generate_caption(theme, GROQ_API_KEY)
     print(f"  {caption[:80]}...")
 
+    # Decide once so a Reel's shots (one of which reuses the main image)
+    # all carry the same overlay text instead of mismatched phrases.
+    overlay_text = decide_overlay_text()
+
     # 2. Base image
     print("\n[2/5] Generating image...")
-    image_url = generate_image(theme, HF_API_KEY, IMGBB_API_KEY, seed)
+    image_url = generate_image(theme, HF_API_KEY, IMGBB_API_KEY, seed, overlay_text)
     if not image_url:
         print("  Image generation failed. Aborting.")
         sys.exit(1)
@@ -86,7 +91,7 @@ def run_bot():
     # 3. Video + music
     print("\n[3/5] Building video...")
     with tempfile.TemporaryDirectory() as tmp:
-        video = generate_video(image_url, theme, HF_API_KEY, tmp, seed)
+        video = generate_video(image_url, theme, HF_API_KEY, tmp, seed, overlay_text)
 
         if not video:
             print("  Video failed — posting image instead.")

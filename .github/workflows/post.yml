@@ -47,6 +47,9 @@ jobs:
           fi
           ffmpeg -version | head -1
 
+      - name: Install fonts for text overlays
+        run: sudo apt-get install -y --no-install-recommends fonts-dejavu-core
+
       - name: Install Python dependencies
         run: pip install requests pillow numpy
 

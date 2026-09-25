@@ -95,7 +95,7 @@ def build_shot_prompt(theme: dict, shot: int, seed: int = 0) -> str:
 def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int = 1344) -> bytes | None:
     """Generate an image via Pollinations.ai. `api_key` kept for call-site
     compatibility but unused — auth is via POLLINATIONS_TOKEN if set."""
-    token = os.environ.get("POLLINATIONS_TOKEN")
+    token = os.environ.get("POLLINATIONS_TOKEN", "").strip() or None
     headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     encoded_prompt = urllib.parse.quote(prompt)
@@ -126,7 +126,7 @@ def generate_fal_image(prompt: str, width: int = 768, height: int = 1344) -> byt
     in this repo's secrets from an earlier version of the project, so
     worth trying before asking for anything new. Falls through safely
     if the key is invalid/expired or out of credit."""
-    api_key = os.environ.get("FAL_API_KEY")
+    api_key = os.environ.get("FAL_API_KEY", "").strip()
     if not api_key:
         return None
     try:
@@ -164,8 +164,8 @@ def generate_cloudflare_image(prompt: str, width: int = 768, height: int = 1344)
     (10k neurons/day, no card required) from a stable major provider —
     unlike Gemini's free image tier, which got discontinued. 768x1344 is
     one of SDXL's native trained resolution buckets (closest to 9:16)."""
-    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
-    api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+    api_token = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
     if not account_id or not api_token:
         return None
     url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{CLOUDFLARE_MODEL}"
@@ -202,7 +202,7 @@ def generate_gemini_image(prompt: str) -> bytes | None:
     """Generate via Gemini (Nano Banana), if GEMINI_API_KEY is set. Real
     photorealism, but Google's own safety filter can refuse swimwear-
     adjacent prompts — caller should fall back to Pollinations on None."""
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
         return None
     try:

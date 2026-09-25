@@ -58,6 +58,7 @@ jobs:
           HF_API_KEY:             ${{ secrets.HF_API_KEY }}
           IMGBB_API_KEY:          ${{ secrets.IMGBB_API_KEY }}
           GEMINI_API_KEY:         ${{ secrets.GEMINI_API_KEY }}
+          FAL_API_KEY:            ${{ secrets.FAL_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID:  ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN:   ${{ secrets.CLOUDFLARE_API_TOKEN }}
           GITHUB_TOKEN:           ${{ secrets.GITHUB_TOKEN }}

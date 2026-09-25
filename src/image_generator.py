@@ -118,6 +118,44 @@ def generate_hf_image(prompt: str, api_key: str, width: int = 768, height: int =
 
     return None
 
+FAL_MODEL_URL = "https://fal.run/fal-ai/flux/dev"
+
+def generate_fal_image(prompt: str, width: int = 768, height: int = 1344) -> bytes | None:
+    """Generate via fal.ai (real FLUX.1-dev), if FAL_API_KEY is set. Paid
+    (small per-image cost), not free — but a leftover key already exists
+    in this repo's secrets from an earlier version of the project, so
+    worth trying before asking for anything new. Falls through safely
+    if the key is invalid/expired or out of credit."""
+    api_key = os.environ.get("FAL_API_KEY")
+    if not api_key:
+        return None
+    try:
+        r = requests.post(
+            FAL_MODEL_URL,
+            headers={"Authorization": f"Key {api_key}", "Content-Type": "application/json"},
+            json={
+                "prompt": prompt,
+                "image_size": {"width": width, "height": height},
+                "num_images": 1,
+            },
+            timeout=90,
+        )
+        if r.status_code != 200:
+            print(f"  fal.ai: HTTP {r.status_code} — {r.text[:200]}")
+            return None
+        images = r.json().get("images", [])
+        if not images:
+            print("  fal.ai: no images in response")
+            return None
+        img_r = requests.get(images[0]["url"], timeout=60)
+        if img_r.status_code == 200:
+            return img_r.content
+        print(f"  fal.ai: image download failed: {img_r.status_code}")
+        return None
+    except Exception as e:
+        print(f"  fal.ai error: {e}")
+        return None
+
 CLOUDFLARE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
 
 def generate_cloudflare_image(prompt: str, width: int = 768, height: int = 1344) -> bytes | None:
@@ -193,6 +231,9 @@ def generate_gemini_image(prompt: str) -> bytes | None:
 def generate_image_bytes(prompt: str, hf_api_key: str) -> tuple[bytes, str] | tuple[None, None]:
     """Try better sources first if configured, fall back to the
     always-available Pollinations source. Returns (bytes, source_name)."""
+    fal_bytes = generate_fal_image(prompt)
+    if fal_bytes:
+        return fal_bytes, "fal"
     cf_bytes = generate_cloudflare_image(prompt)
     if cf_bytes:
         return cf_bytes, "cloudflare"

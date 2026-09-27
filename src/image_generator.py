@@ -47,127 +47,37 @@ TARGET_WIDTH = 1080
 # produce the exact same face/body repeatedly.
 # ---------------------------------------------------------------------------
 
+# Kept short on purpose: SDXL's text encoder effectively truncates around
+# 77 tokens, and these get combined with outfit/setting/style/safety text
+# in build_prompt. The previous ~25-30-word versions (repeating "curvy,
+# fuller hips and thighs, defined waist" in every single entry, on top of
+# BODY_BOOST saying the same thing again) pushed total prompt length past
+# 170 words - way beyond the effective limit, so most of the actual style
+# instructions (candid photo, safety constraints) were silently dropped,
+# and the model was free to drift into illustration/vintage-photo styles
+# (confirmed on 3 real posts). Curvy-figure detail now lives only in
+# BODY_BOOST, not duplicated here.
 CHARACTERS = [
-    (
-        "An adult Indian woman in her mid-twenties with long dark wavy hair, "
-        "warm wheatish skin, dark almond eyes, full lips, a noticeably curvy "
-        "voluptuous figure, defined waist, fuller hips, fuller thighs and "
-        "naturally proportioned feminine curves"
-    ),
-
-    (
-        "An adult South Indian woman in her mid-twenties with long straight "
-        "jet-black hair, deep bronze skin, large expressive dark eyes, a "
-        "voluptuous curvy figure, fuller hips, fuller thighs and a defined waist"
-    ),
-
-    (
-        "An adult Brazilian woman in her mid-twenties with long dark wavy "
-        "hair, sun-kissed bronze skin, deep brown eyes, a voluptuous curvy "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Italian woman in her mid-twenties with long dark brown "
-        "hair, olive skin, hazel eyes, sharp features, a curvy hourglass "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Korean woman in her mid-twenties with long straight black "
-        "hair, fair skin, dark eyes, soft delicate features, a curvy figure, "
-        "fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Nigerian woman in her mid-twenties with dark curly hair, "
-        "deep rich brown skin, striking dark eyes, a voluptuous curvy "
-        "figure, dramatically fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Russian woman in her mid-twenties with long light blonde "
-        "hair, fair skin, pale blue eyes, sharp cheekbones, a curvy hourglass "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Mexican woman in her mid-twenties with long dark wavy hair, "
-        "warm tan skin, deep brown eyes, full lips, a voluptuous curvy "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult French woman in her mid-twenties with medium-length light "
-        "brown hair, fair skin, green eyes, elegant features, a curvy figure, "
-        "fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Filipino woman in her mid-twenties with long dark hair, "
-        "tan skin, dark brown eyes, bright smile, a curvy figure, fuller "
-        "hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult American woman in her mid-twenties with long wavy dirty-"
-        "blonde hair, fair sun-kissed skin, blue-green eyes, a voluptuous "
-        "curvy figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Spanish woman in her mid-twenties with long dark hair, "
-        "olive skin, dark brown eyes, striking features, a curvy hourglass "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Japanese woman in her mid-twenties with long straight "
-        "black hair, fair skin, dark eyes, delicate features, a curvy "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Colombian woman in her mid-twenties with long dark curly "
-        "hair, warm caramel skin, brown eyes, a voluptuous curvy figure, "
-        "dramatically fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Lebanese woman in her mid-twenties with long dark wavy "
-        "hair, olive skin, deep brown eyes, sharp glamorous features, a "
-        "curvy hourglass figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Swedish woman in her mid-twenties with long platinum "
-        "blonde hair, fair skin, light blue eyes, a curvy figure, fuller "
-        "hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Ethiopian woman in her mid-twenties with dark curly hair, "
-        "deep brown skin, striking dark eyes, high cheekbones, a voluptuous "
-        "curvy figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Thai woman in her mid-twenties with long dark hair, tan "
-        "golden skin, dark brown eyes, soft features, a curvy figure, "
-        "fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Greek woman in her mid-twenties with long dark wavy hair, "
-        "olive sun-kissed skin, hazel eyes, a voluptuous curvy hourglass "
-        "figure, fuller hips and thighs, defined waist"
-    ),
-
-    (
-        "An adult Australian woman in her mid-twenties with long wavy "
-        "sandy-blonde hair, fair tan skin, blue eyes, a curvy athletic "
-        "figure, fuller hips and thighs, defined waist"
-    ),
+    "adult Indian woman, mid-20s, long dark wavy hair, wheatish skin",
+    "adult South Indian woman, mid-20s, straight jet-black hair, bronze skin",
+    "adult Brazilian woman, mid-20s, long dark wavy hair, bronze skin",
+    "adult Italian woman, mid-20s, dark brown hair, olive skin, hazel eyes",
+    "adult Korean woman, mid-20s, straight black hair, fair skin",
+    "adult Nigerian woman, mid-20s, dark curly hair, deep brown skin",
+    "adult Russian woman, mid-20s, light blonde hair, fair skin, blue eyes",
+    "adult Mexican woman, mid-20s, dark wavy hair, warm tan skin",
+    "adult French woman, mid-20s, light brown hair, fair skin, green eyes",
+    "adult Filipino woman, mid-20s, long dark hair, tan skin",
+    "adult American woman, mid-20s, wavy dirty-blonde hair, fair skin",
+    "adult Spanish woman, mid-20s, dark hair, olive skin, brown eyes",
+    "adult Japanese woman, mid-20s, straight black hair, fair skin",
+    "adult Colombian woman, mid-20s, dark curly hair, caramel skin",
+    "adult Lebanese woman, mid-20s, dark wavy hair, olive skin",
+    "adult Swedish woman, mid-20s, platinum blonde hair, fair skin",
+    "adult Ethiopian woman, mid-20s, dark curly hair, deep brown skin",
+    "adult Thai woman, mid-20s, dark hair, tan golden skin",
+    "adult Greek woman, mid-20s, dark wavy hair, olive skin, hazel eyes",
+    "adult Australian woman, mid-20s, wavy sandy-blonde hair, fair tan skin",
 ]
 
 
@@ -176,30 +86,12 @@ CHARACTERS = [
 # ---------------------------------------------------------------------------
 
 CAMERA_STYLES = [
-    (
-        "shot on iPhone 15 Pro front camera, natural daylight, casual framing, "
-        "realistic phone-camera detail"
-    ),
-    (
-        "shot on iPhone, candid phone photo, natural sunlight, realistic "
-        "phone-camera grain and slightly imperfect framing"
-    ),
-    (
-        "phone camera selfie, warm natural lighting, casual authentic pose, "
-        "realistic amateur Instagram photography"
-    ),
-    (
-        "shot on iPhone, natural daylight, candid unposed moment, realistic "
-        "skin texture and ordinary phone-camera optics"
-    ),
-    (
-        "modern smartphone camera, warm ambient lighting, casual selfie angle, "
-        "authentic social-media photography"
-    ),
-    (
-        "high-quality smartphone portrait, natural outdoor light, realistic "
-        "skin texture, subtle lens imperfections and candid composition"
-    ),
+    "shot on iPhone, natural daylight, candid",
+    "shot on iPhone, candid phone photo, natural light",
+    "phone camera selfie, warm natural lighting",
+    "shot on iPhone, candid unposed moment",
+    "smartphone camera, warm ambient lighting",
+    "smartphone photo, natural outdoor light, candid",
 ]
 
 
@@ -272,29 +164,17 @@ OUTFITS = {
 # THEMES / STYLE BOOSTS
 # ---------------------------------------------------------------------------
 
-SAFETY_SUFFIX = (
-    "adult woman, confident swimwear and fashion photography, "
-    "tasteful non-explicit presentation, no nudity, "
-    "no exposed nipples or genitals, not sexually explicit"
-)
-
+# Kept short - see CHARACTERS comment above re: token truncation. The
+# negative_prompt (CLOUDFLARE_NEGATIVE_PROMPT) carries most of the actual
+# safety weight now since it's a separate field, not competing for the
+# same ~77-token budget as the rest of this prompt.
+SAFETY_SUFFIX = "SFW, no nudity"
 
 GLAM_CHANCE = 0.6
-
-GLAM_BOOST = (
-    "striking beauty, radiant natural skin, beautiful facial features, "
-    "glamorous styling, confident presence, polished Instagram aesthetic"
-)
-
+GLAM_BOOST = "beautiful, glamorous"
 
 BODY_BOOST_CHANCE = 1.0
-
-BODY_BOOST = (
-    "voluptuous curvy figure, dramatically fuller hips and thighs, "
-    "wide curvy hips, thick thighs, "
-    "sharply defined narrow waist, hourglass silhouette, "
-    "realistic body proportions"
-)
+BODY_BOOST = "curvy figure, fuller hips and thighs"
 
 
 def _maybe_glam() -> str:
@@ -347,19 +227,10 @@ def build_prompt(theme: dict, seed: int = 0) -> str:
     )
 
     return (
-        f"Full-body photograph, wide shot from head to knees, "
-        f"her complete figure clearly visible in frame. "
-        f"{char}. "
-        f"She is wearing {outfit}. "
-        f"She is at {theme['setting']}. "
-        f"{theme['vibe']} mood. "
-        f"Relaxed confident natural pose, standing, whole body in shot. "
-        f"{camera}. "
-        f"Candid real-life Instagram photo, "
-        f"not a professional studio photoshoot, "
-        f"authentic social-media photography, "
-        f"realistic skin texture, realistic proportions, "
-        f"natural lighting and believable environment."
+        f"Full-body iPhone photo, head to knees. "
+        f"{char}. Wearing {outfit}. "
+        f"At {theme['setting']}, {theme['vibe']} mood. "
+        f"{camera}, candid, realistic skin."
         f"{_maybe_body_boost()}"
         f"{_maybe_glam()} "
         f"{SAFETY_SUFFIX}."
@@ -395,30 +266,11 @@ def build_shot_prompt(
     )
 
     shot_angles = [
-        (
-            f"full-body shot showing her complete outfit and natural body "
-            f"proportions, {theme['setting']}, warm golden-hour light"
-        ),
-
-        (
-            "casual mirror selfie, phone visible in the reflection, "
-            "relaxed confident pose, looking naturally toward the mirror"
-        ),
-
-        (
-            f"three-quarter body shot, candid moment, looking slightly to "
-            f"the side, {theme['setting']}"
-        ),
-
-        (
-            f"full-body beach lifestyle photograph, walking naturally, "
-            f"{theme['setting']}, sunlight and realistic shadows"
-        ),
-
-        (
-            f"seated resort lifestyle photograph, relaxed posture, "
-            f"{theme['setting']}, natural ambient light"
-        ),
+        "full-body shot, golden-hour light",
+        "mirror selfie, phone visible in reflection",
+        "three-quarter body shot, candid, looking to the side",
+        "full-body shot, walking naturally",
+        "seated, relaxed posture",
     ]
 
     angle = _pick(
@@ -427,14 +279,9 @@ def build_shot_prompt(
     )
 
     return (
-        f"{char}. "
-        f"She is wearing {outfit}. "
-        f"{angle}. "
-        f"{theme['vibe'].capitalize()} expression. "
-        f"{camera}. "
-        f"Authentic Instagram lifestyle photography, "
-        f"realistic skin texture, natural body proportions, "
-        f"realistic lighting, candid composition."
+        f"{char}. Wearing {outfit}. "
+        f"{angle}, at {theme['setting']}. "
+        f"{camera}, candid, realistic skin."
         f"{_maybe_body_boost()}"
         f"{_maybe_glam()} "
         f"{SAFETY_SUFFIX}."
@@ -610,12 +457,15 @@ CLOUDFLARE_MODEL = (
 # SDXL supports negative_prompt but we weren't passing one - this is a
 # real, direct lever for "looks AI" that the free Pollinations source
 # never had available.
+# Kept short (see CHARACTERS comment) - a real test post came back as a
+# black-and-white pencil illustration and another as a sepia vintage
+# photo despite this list explicitly banning those, most likely because
+# the list itself was long enough to blow the same effective token
+# budget as the positive prompt. Trimmed to the terms that matter most.
 CLOUDFLARE_NEGATIVE_PROMPT = (
-    "3d render, cgi, digital art, illustration, painting, cartoon, anime, "
-    "airbrushed, plastic skin, waxy skin, doll-like, uncanny, artificial, "
-    "over-smoothed, symmetrical perfect face, studio backdrop, "
-    "close-up crop, headshot only, cropped body, blurry, low quality, "
-    "deformed, extra limbs, bad anatomy, watermark, text, logo"
+    "illustration, painting, cartoon, anime, sketch, "
+    "black and white, sepia, vintage, "
+    "3d render, cgi, blurry, deformed, bad anatomy, watermark, text"
 )
 
 

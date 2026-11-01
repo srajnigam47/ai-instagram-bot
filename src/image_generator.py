@@ -651,43 +651,48 @@ def generate_gemini_image(
 # PROVIDER FALLBACK
 # ---------------------------------------------------------------------------
 
+def _is_blank_image(image_bytes: bytes, threshold: float = 3.0) -> bool:
+    """Catches a real failure mode found in live posts: a provider can
+    return HTTP 200 with a valid image/jpeg content-type, but the actual
+    pixel data is solid black (std-dev 0) - confirmed on an actual
+    Instagram post. Likely a content-safety system silently zeroing the
+    output instead of returning an error. Std-dev (not mean) catches any
+    flat/solid-color failure, not just black specifically."""
+    try:
+        im = Image.open(io.BytesIO(image_bytes)).convert("L")
+        return float(np.array(im, dtype=np.float32).std()) < threshold
+    except Exception:
+        return False
+
+
 def generate_image_bytes(
     prompt: str,
     hf_api_key: str
 ) -> tuple[bytes, str] | tuple[None, None]:
 
     """
-    Try the configured image providers in order.
+    Try the configured image providers in order. Each gets up to 2
+    attempts before moving to the next provider, since a blank/failed
+    image is usually a one-off glitch rather than the provider being
+    down (which would show up as an HTTP error instead, handled inside
+    each generate_*_image function).
     """
 
-    fal_bytes = generate_fal_image(
-        prompt
-    )
+    providers = [
+        ("fal", lambda: generate_fal_image(prompt)),
+        ("cloudflare", lambda: generate_cloudflare_image(prompt)),
+        ("gemini", lambda: generate_gemini_image(prompt)),
+        ("pollinations", lambda: generate_hf_image(prompt, hf_api_key)),
+    ]
 
-    if fal_bytes:
-        return fal_bytes, "fal"
-
-    cf_bytes = generate_cloudflare_image(
-        prompt
-    )
-
-    if cf_bytes:
-        return cf_bytes, "cloudflare"
-
-    gemini_bytes = generate_gemini_image(
-        prompt
-    )
-
-    if gemini_bytes:
-        return gemini_bytes, "gemini"
-
-    pollinations_bytes = generate_hf_image(
-        prompt,
-        hf_api_key
-    )
-
-    if pollinations_bytes:
-        return pollinations_bytes, "pollinations"
+    for name, generate in providers:
+        for attempt in range(2):
+            image_bytes = generate()
+            if not image_bytes:
+                break  # provider itself failed (HTTP error, missing key, etc.) - don't retry here
+            if not _is_blank_image(image_bytes):
+                return image_bytes, name
+            print(f"  {name}: blank image detected (attempt {attempt + 1}/2)")
 
     return None, None
 
